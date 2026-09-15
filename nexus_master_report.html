@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nexus Capital AI Trading Platform - Master Report</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 9pt;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #64748b;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0f172a;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Header Banner */
+  .header-box {
+    background: linear-gradient(135deg, #090d16 0%, #1e293b 100%);
+    color: white;
+    padding: 24px 28px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+  .header-box h1 {
+    margin: 0 0 6px 0;
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #38bdf8;
+  }
+  .header-box .subtitle {
+    font-size: 11pt;
+    color: #94a3b8;
+    margin-bottom: 14px;
+  }
+  .meta-tags {
+    display: flex;
+    gap: 12px;
+    font-size: 8.5pt;
+    font-family: monospace;
+  }
+  .meta-tag {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 3px 10px;
+    border-radius: 6px;
+    color: #e2e8f0;
+  }
+  .meta-tag.highlight {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #34d399;
+  }
+
+  h2 {
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px 0;
+    font-size: 9.5pt;
+  }
+  th {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 700;
+    text-align: left;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+  }
+  td {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Cards Grid */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .card h4 {
+    margin: 0 0 4px 0;
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #0284c7;
+  }
+  .card p {
+    margin: 0;
+    font-size: 9pt;
+    color: #334155;
+  }
+
+  /* Callouts */
+  .callout {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 9.5pt;
+  }
+  .callout.warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+  }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #065f46;
+  }
+  .callout.warning .callout-title {
+    color: #92400e;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+  }
+  li {
+    margin-bottom: 5px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: 700;
+    font-family: monospace;
+  }
+  .badge-buy { background: #dcfce7; color: #15803d; }
+  .badge-sell { background: #fee2e2; color: #b91c1c; }
+  .badge-neutral { background: #f1f5f9; color: #475569; }
+
+  .formula-box {
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 9.5pt;
+    margin: 12px 0;
+    text-align: center;
+  }
+
+  .footer {
+    margin-top: 30px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 10px;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Header Banner -->
+  <div class="header-box">
+    <h1>🏛️ NEXUS CAPITAL AI TRADING FIRM</h1>
+    <div class="subtitle">Autonomous Institutional Quantitative Trading Intelligence & Multi-Agent Swarm Platform</div>
+    <div class="meta-tags">
+      <div class="meta-tag highlight">Status: Production Grade</div>
+      <div class="meta-tag">Engine: Google Gemini 3.6 Flash Swarm</div>
+      <div class="meta-tag">Bridge: IC Markets MT5 ECN + Binance WS</div>
+      <div class="meta-tag">Document: Comprehensive Master Audit</div>
+    </div>
+  </div>
+
+  <!-- Section 1 -->
+  <h2>1. Executive Summary: Yeh Tool Kya Hai?</h2>
+  <p>
+    <strong>Nexus Capital AI Trading Platform</strong> koi aam charting software ya simple indicator tool nahi hai, balkay ek <strong>Autonomous Institutional Hedge Fund Quantitative Engine</strong> hai. Wall Street aur global tier-1 firms jis tarah high-frequency feeds, orderbook liquidity walls, macro calendar hazards, aur derivatives flows ko monitor karti hain, yeh platform wahi tamam capabilities ek single unified terminal mein faraham karta hai.
+  </p>
+  <p>
+    Yeh system <strong>8 specialized AI agents</strong> par mushtamil hai jo har trade setup par aapas mein debate karte hain, risk rules ko enforce karte hain, aur trader ko andaze ke bajaye <strong>exact quantitative lot sizing</strong>, stop-loss invalidation, aur take-profit targets generate kar ke dete hain.
+  </p>
+
+  <!-- Section 2 -->
+  <h2>2. Trading Ke Liye Yeh Kyun Zaroori Hai? (Retail Loss Trap vs Institutional Edge)</h2>
+  <p>
+    Financial markets (Forex, Gold, aur Crypto) mein <strong>90% se 95% retail traders apna account wash karwa dete hain</strong>. Iski bunyadi wajah yeh hai ke retail trader sirf chart candles aur lagging indicators (RSI, MACD, Moving Averages) par trade leta hai, jabke market ko asal mein <strong>Liquidity Flows, Central Bank Policies, aur Whales</strong> move karti hain.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Market Factor</th>
+        <th style="width: 35%;">Aam Retail Trader (Kyun Marta Hai?)</th>
+        <th style="width: 40%;">Nexus Institutional Engine (Kamyabi Ka Raz)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Market Data Feed</strong></td>
+        <td>Lagging web charts, 15-minute delayed CME prices.</td>
+        <td><strong>MetaTrader 5 Direct IPC Bridge:</strong> Real IC Markets ECN raw spread feed (Zero CME premium delay).</td>
+      </tr>
+      <tr>
+        <td><strong>Orderbook Depth</strong></td>
+        <td>Sirf candle ka color dekh kar aggressive buy/sell karta hai.</td>
+        <td><strong>L2 Order Book Wall Radar:</strong> Top 20 Bids/Asks liquidity depth aur spoofing wall ratio scan karta hai.</td>
+      </tr>
+      <tr>
+        <td><strong>Derivatives Flow</strong></td>
+        <td>Pata hi nahi hota ke futures market mein kya ho raha hai.</td>
+        <td><strong>Futures OI & 8h Funding Rates:</strong> Retail traps aur short/long squeeze zones ko pehle identify karta hai.</td>
+      </tr>
+      <tr>
+        <td><strong>Whale Activity</strong></td>
+        <td>Whales ka aasan shikar ban kar stop-loss de baithta hai.</td>
+        <td><strong>Whale CVD Radar:</strong> $100k+ ke taker orders aur Cumulative Volume Delta absorption ko track karta hai.</td>
+      </tr>
+      <tr>
+        <td><strong>Macro & News</strong></td>
+        <td>News aane ke baad panic mein loss booking karta hai.</td>
+        <td><strong>Volatility Clocks & ForexFactory:</strong> FOMC/CPI/NFP countdowns aur session hazard alerts pehle warning deti hain.</td>
+      </tr>
+      <tr>
+        <td><strong>Position Sizing</strong></td>
+        <td>Andaze se bari lot size dalta hai (Overleveraging).</td>
+        <td><strong>Mathematical Sizing:</strong> Account balance aur 2% risk rule ke mutabiq exact fractional lots calculate karta hai.</td>
+      </tr>
+      <tr>
+        <td><strong>Trading Psychology</strong></td>
+        <td>Lalach (Greed), Khauf (Fear), aur Revenge trading.</td>
+        <td><strong>Cold Machine Consensus:</strong> 8 AI specialists ka mathematical vote aur Risk Officer ka strict veto filter.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- Section 3 -->
+  <h2>3. Platform Ki 9 Real-Time Institutional Data Streams (Zero Mock Data)</h2>
+  <p>Humare system mein koi farzi ya dummy data nahi hai; tamam modules live production exchange APIs aur broker bridges se connected hain:</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>1. Real-Time Crypto Data</h4>
+      <p>Binance Public WebSocket se sub-second spot ticks, 24-hour high/low, raw volume, aur percentage changes stream ho rahe hain.</p>
+    </div>
+    <div class="card">
+      <h4>2. Real-Time Gold & Forex Data</h4>
+      <p>IC Markets MetaTrader 5 Direct IPC Bridge. Zero CME delay, zero futures premium mismatch, aur raw ECN broker spreads.</p>
+    </div>
+    <div class="card">
+      <h4>3. Macroeconomic Calendar</h4>
+      <p>ForexFactory aur Yahoo Finance se live FOMC, CPI, NFP, GDP countdowns aur global session volatility clocks (London Fix, NY Open, Tokyo).</p>
+    </div>
+    <div class="card">
+      <h4>4. Derivatives & Squeeze Radar</h4>
+      <p>Binance Futures Open Interest ($ millions), 8-hour funding rates, top trader Long/Short ratio, aur squeeze vulnerability zones.</p>
+    </div>
+    <div class="card">
+      <h4>5. Breaking Global News Intelligence</h4>
+      <p>Geopolitical conflicts, sanctions, regulatory actions, aur central bank rate announcements ki real-time natural language classification.</p>
+    </div>
+    <div class="card">
+      <h4>6. Market Sentiment & Panic Pulse</h4>
+      <p>Crypto Fear & Greed Index, 0-100 Panic Intensity Meter, aur Polymarket event odds sentiment aggregation.</p>
+    </div>
+    <div class="card">
+      <h4>7. On-Chain Whale & CVD Radar</h4>
+      <p>Large institutional taker orders (>$100,000) aur Cumulative Volume Delta (CVD) absorption net flow.</p>
+    </div>
+    <div class="card">
+      <h4>8. Macroeconomic Baseline</h4>
+      <p>US Dollar Index (DXY), US 10-Year Treasury Yields, aur St. Louis Fed (FRED API) monetary baseline.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 8px;">
+    <h4>9. Token Dilution & VC Unlock Cliffs</h4>
+    <p>Upcoming VC vesting cliffs, unlocked token values in USD, aur token dilution dump risk classifications.</p>
+  </div>
+
+  <!-- Section 4 -->
+  <h2>4. Decision Kin Basis Par Hota Hai? (Multi-Agent Swarm Protocol)</h2>
+  <p>
+    Decision kisi aik bot ya simple signal indicator par nahi hota. Platform par <strong>8 Specialized AI Analysts</strong> ka arena chalta hai jo mutafiqqa faisla (Consensus) generate karte hain:
+  </p>
+
+  <ol>
+    <li><strong>Technical & Liquidity Structure Analyst:</strong> Dynamic 10-EMA aur 50-SMA trendlines, broker raw spreads (bps), aur orderbook depth wall balance ko verify karta hai.</li>
+    <li><strong>Macroeconomic & Central Bank Analyst:</strong> US Dollar Index (DXY) aur US 10-Year Treasury Yields ke correlation se check karta hai ke macro liquidity asset ko support kar rahi hai ya nahi.</li>
+    <li><strong>Global Breaking News Intelligence:</strong> Live geopolitical aur regulatory headlines ko scan kar ke catalyst score calculate karta hai.</li>
+    <li><strong>Derivatives & Liquidity Flow Specialist:</strong> Futures Open Interest aur 8h funding rate check karta hai ke retail trapped to nahi aur squeeze kahan aayega.</li>
+    <li><strong>On-Chain Whale & Smart Money Radar:</strong> CVD flow se dekhta hai ke institutional wallets net accumulation zone mein hain ya distribution zone mein.</li>
+    <li><strong>Institutional Bull Thesis Researcher:</strong> Setup ke haq mein 3 mazboot, data-backed reasons pesh karta hai.</li>
+    <li><strong>Institutional Bear Counter-Thesis Researcher:</strong> Setup ke khilaf downside hazards, resistance walls, aur invalidation traps highlight karta hai.</li>
+    <li><strong>Quantitative Risk Management Officer (Veto Power):</strong> Minimum 1:2.0 Risk-to-Reward ratio enforce karta hai. Agar setup dangerous ho to trade ko <strong>VETO (Cancel)</strong> kar deta hai.</li>
+  </ol>
+
+  <div class="formula-box">
+    Consensus Score = (Tech × 0.25) + (Derivatives/Whale × 0.30) + (Macro/News × 0.25) + (Risk × 0.20)
+    <br>
+    [Verdict Validated ONLY if Confidence Score >= 75% and Risk/Reward >= 1:2.0]
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 5 -->
+  <h2>5. Tailored Capital Sizing & Risk Management (Aapka Paisa, Aapka Risk)</h2>
+  <p>
+    Platform par analysis run karte waqt trader apna <strong>Account Capital ($)</strong> aur <strong>Risk %</strong> select karta hai (presets: $1k, $5k, $10k, $25k, $50k, $100k). System exact mathematical sizing calculate karta hai:
+  </p>
+
+  <div class="formula-box">
+    Position Size (Lots) = (Account Capital × Risk %) / |Optimal Entry - Stop Loss|
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Exact Lot Size Calculation</h4>
+      <p>Maslan $10,000 capital aur 2% risk par Gold ke liye exact <strong>0.05 Lots (5.11 units)</strong> calculate hota hai taake account kabhi overexpose na ho.</p>
+    </div>
+    <div class="card">
+      <h4>Maximum Dollar Loss (SL)</h4>
+      <p>Agar trade Stop-Loss par invalidate ho to exact dollar loss <strong>-$200.00</strong> hoga (na aik dollar kam, na zyada).</p>
+    </div>
+    <div class="card">
+      <h4>Projected Profit (TP1 & TP2)</h4>
+      <p>1.5R target par <strong>+$400.05</strong> aur 2.5R target par <strong>+$600.00</strong> ka projected gain profile clear nazar aata hai.</p>
+    </div>
+    <div class="card">
+      <h4>Leverage & Margin Guidance</h4>
+      <p>Recommended leverage (5x - 10x Max) aur required margin ($761.14 USD) trader ko overleveraging hazard se bachatay hain.</p>
+    </div>
+  </div>
+
+  <!-- Section 6 -->
+  <h2>6. Interactive Paper Trading Terminal (Full User Control)</h2>
+  <p>Trader bina kisi mali nuqsan ke market par apni executions aur system ki accuracy test kar sakta hai:</p>
+  <ul>
+    <li><strong>Capital Setting:</strong> Terminal ke andar trader apna paper capital ($1k se $100k+ ya koi bhi custom amount) set kar sakta hai jo SQLite mein sync hota hai.</li>
+    <li><strong>Custom Lot Sizing:</strong> Presets (0.01 se 2.0 lots) ya custom fraction type karein, sath hi AI Recommended sizing ka one-click button mojud hai.</li>
+    <li><strong>Leverage Multiplier:</strong> 1x (Spot) se le kar 100x tak presets ya custom leverage input.</li>
+    <li><strong>Mark-to-Market Live PnL:</strong> Broker ke live tick ke sath har second unrealized profit/loss update hota hai.</li>
+    <li><strong>Automated SL/TP Engine:</strong> Stop-loss ya Take-profit price hit hone par position automatically close ho jati hai.</li>
+    <li><strong>Manual Close:</strong> Kisi bhi waqt single click se trade close kar ke profit/loss lock kiya ja sakta hai.</li>
+  </ul>
+
+  <!-- Section 7 -->
+  <h2>7. Persistent SQLite Database & Outcome Verification Engine</h2>
+  <p>
+    Tamam data permanently <code>backend/nexus_trading.db</code> (SQLite WAL mode) mein save hota hai taake server restart hone par bhi koi report ya trade zaya na ho:
+  </p>
+  <ul>
+    <li><strong>"Verify Market Move" Engine:</strong> Decision History table mein har purani trade ke aage verify button mojud hai jo live market price se check karta hai ke trade ne Take-Profit hit kiya, Stop-Loss hit kiya, ya abhi live in-play hai.</li>
+    <li><strong>Outcome Status Badges:</strong> 🟢 <code>HIT TP (WIN)</code>, 🔴 <code>HIT SL (LOSS)</code>, 🟡 <code>ACTIVE (IN PLAY)</code>.</li>
+    <li><strong>Full Audit Trail:</strong> JSON Export button se poora database backup download aur Import button se wapis restore kiya ja sakta hai.</li>
+  </ul>
+
+  <!-- Section 8 -->
+  <h2>8. End-to-End Execution Workflow (Roadmap)</h2>
+  <ol>
+    <li><strong>Instrument & Capital Input:</strong> User asset (Gold ya Crypto) chunta hai aur apna Capital ($) aur Risk (%) enter karta hai.</li>
+    <li><strong>Live Ingestion:</strong> IC Markets MT5 bridge aur Binance WS sub-second live ticks aur orderbook stream karte hain.</li>
+    <li><strong>Swarm Execution:</strong> 8 AI specialists indicators, yields, macro headlines, aur whale CVD analyze karte hain.</li>
+    <li><strong>Bull vs Bear Debate:</strong> Bull Researcher aur Bear Researcher downside hazards par behas karte hain.</li>
+    <li><strong>Consensus Verdict:</strong> Committee final BUY/SELL verdict, confidence %, SL, TP, aur tailored lot size banati hai.</li>
+    <li><strong>Deploy Paper Trade:</strong> Ek click se terminal khul kar customized lots aur leverage ke sath position open karta hai.</li>
+    <li><strong>Outcome Verification:</strong> Live market par automated verification check karti hai ke analysis kitna kamyab raha.</li>
+  </ol>
+
+  <div class="callout">
+    <div class="callout-title">Khulasa (Conclusion):</div>
+    Nexus Platform trader ko andaze aur jazbaat se nikal kar ek multi-billion dollar hedge fund ka discipline, mathematical position sizing, aur institutional execution edge faraham karta hai.
+  </div>
+
+  <div class="footer">
+    <span>Nexus Capital AI Trading Firm • Master Architecture Document</span>
+    <span>Generated: 2026-09-12 • Version 3.1.0 Institutional</span>
+  </div>
+
+</body>
+</html>

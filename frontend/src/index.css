@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-canvas: #F2F3F8;
+  --bg-surface: #FFFFFF;
+  --bg-well: #F0F1F5;
+  --bg-well-subtle: #F8F9FE;
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --text-main: #111115;
+  --text-muted: #78767B;
+  --btn-primary-bg: #111115;
+  --btn-primary-text: #FFFFFF;
+}
+
+.dark {
+  --bg-canvas: #060709;
+  --bg-surface: #111215;
+  --bg-well: #0A0B0E;
+  --bg-well-subtle: #16171B;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --text-main: #FFFFFF;
+  --text-muted: #8A8F98;
+  --btn-primary-bg: #FFFFFF;
+  --btn-primary-text: #000000;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-main);
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-mono, .tabular-nums {
+  font-family: "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Custom card shadows matching Stitch HTML */
+.card-shadow {
+  box-shadow: 0 10px 30px -5px rgba(25, 28, 31, 0.04), 0 4px 12px -2px rgba(25, 28, 31, 0.025);
+}
+
+.dark .card-shadow {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
+}
+
+.pop-shadow {
+  box-shadow: 0 14px 34px -4px rgba(25, 28, 31, 0.07), 0 6px 16px -3px rgba(25, 28, 31, 0.03);
+}
+
+.dark .pop-shadow {
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.95);
+}
+
+/* Custom range slider styling */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--btn-primary-bg);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  border: 2px solid var(--bg-surface);
+}
+
+input[type=range]::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--btn-primary-bg);
+  cursor: pointer;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 150, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 150, 0.45);
+}

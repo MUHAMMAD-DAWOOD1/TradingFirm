@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexus Capital - Trade &amp; Agent Deep-Dive</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#e4e1e7",
+            "outline-variant": "#c8c5cb",
+            "on-surface-variant": "#47464b",
+            "on-secondary-fixed": "#00210d",
+            "surface-variant": "#e1e2e7",
+            "surface-container-lowest": "#ffffff",
+            "background": "#f8f9fe",
+            "outline": "#78767b",
+            "surface-container-high": "#e7e8ed",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#eff0f5",
+            "surface-bright": "#f8f9fe",
+            "primary": "#000000",
+            "on-secondary-container": "#00743c",
+            "on-primary-container": "#858388",
+            "on-secondary": "#ffffff",
+            "secondary-fixed": "#66fe9d",
+            "surface-dim": "#d9dadf",
+            "primary-container": "#1b1b1f",
+            "secondary-container": "#66fe9d",
+            "surface-tint": "#5f5e63",
+            "on-background": "#191c1f",
+            "inverse-primary": "#c8c5cb",
+            "primary-fixed-dim": "#c8c5cb",
+            "surface-container-low": "#f2f3f8",
+            "on-tertiary-fixed": "#281900",
+            "secondary": "#006d38",
+            "surface-container-highest": "#e1e2e7",
+            "on-surface": "#191c1f",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#604100",
+            "on-primary-fixed": "#1b1b1f",
+            "surface-container": "#edeef3",
+            "on-primary-fixed-variant": "#47464b",
+            "tertiary-fixed": "#ffdead",
+            "tertiary-container": "#281900",
+            "on-primary": "#ffffff",
+            "on-secondary-fixed-variant": "#005229",
+            "error-container": "#ffdad6",
+            "tertiary": "#000000",
+            "tertiary-fixed-dim": "#fabc4d",
+            "error": "#ba1a1a",
+            "on-error-container": "#93000a",
+            "on-tertiary-container": "#af7a05",
+            "inverse-surface": "#2e3134",
+            "surface": "#f8f9fe",
+            "secondary-fixed-dim": "#44e184"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-xl": "2rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "numeric-md": ["JetBrains Mono"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "numeric-lg": ["JetBrains Mono"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "numeric-hero": ["JetBrains Mono"],
+            "numeric-hero-mobile": ["JetBrains Mono"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "numeric-sm": ["JetBrains Mono"],
+            "headline-sm": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "numeric-md": ["15px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "display-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["13px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "numeric-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-hero-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .ambient-card {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.025);
+    }
+    .ambient-drawer {
+      box-shadow: -20px 0 50px -10px rgba(17, 17, 21, 0.08), -8px 0 20px -4px rgba(17, 17, 21, 0.04);
+    }
+    .cta-shadow {
+      box-shadow: 0 8px 20px -4px rgba(17, 17, 21, 0.22);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen overflow-x-hidden antialiased select-none">
+<!-- TOP NAVIGATION BAR (Shared Component Anchor) -->
+<header class="bg-surface dark:bg-inverse-surface w-full px-space-lg py-space-md max-w-full flex justify-between items-center sticky top-0 z-30">
+<div class="flex items-center gap-8">
+<!-- Brand Logo Anchor -->
+<a class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-on-surface flex items-center gap-2" href="#">
+<span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">currency_exchange</span>
+</span>
+<span>Nexus Capital</span>
+</a>
+<!-- Desktop Nav Links -->
+<nav class="hidden md:flex items-center gap-1.5 bg-surface-container-low p-1 rounded-full">
+<!-- 'Trade' is ACTIVE according to Semantic Mapping for this screen -->
+<a class="bg-primary dark:bg-primary-fixed text-on-primary dark:text-on-primary-fixed rounded-full px-4 py-1.5 font-label-md text-label-md" href="#">Trade</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Signals</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Positions</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Calendar</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Vault</a>
+</nav>
+</div>
+<!-- Trailing Actions Cluster -->
+<div class="flex items-center gap-3">
+<!-- Connection Status Badge -->
+<div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary-fixed/20 text-on-secondary-fixed font-label-md text-label-md">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>MT5 Connected</span>
+</div>
+<!-- Account Equity Tabular Pill -->
+<div class="px-4 py-1.5 rounded-full bg-surface-container-lowest ambient-card flex items-center gap-2 text-on-surface font-numeric-md text-numeric-md">
+<span class="text-on-surface-variant font-body-sm text-body-sm">Equity:</span>
+<span class="font-bold">$84,250.00</span>
+</div>
+<!-- Trailing Icon Action: Notifications -->
+<button aria-label="Notifications" class="w-9 h-9 rounded-full bg-surface-container-lowest ambient-card flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<!-- Profile Image Anchor -->
+<div class="w-9 h-9 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="Close up profile photo of a modern fintech portfolio manager in natural light, sharp focus, wearing minimalist slate attire with an uncluttered background reflecting calm focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-25bP85CH6C9963ZTyPt0qmtysXJjr3cXZvsG7TL8QRqMsGNJ_tEQ7HBMTw_CLd_cX7kdON93SGXH9fbTJqNFgrw6ZCWuCaX4OweGzCh56h09owe7jOe0ebP_PAyRC2RDjsV30KTJ0KhUuHSy49UZknGreJR60P8uSi6AJOSbcFCRGhHiauN2oW38I5AvYrOrhiF9fxgy4f6nCTCBM5MYhh91ClnpYlf9OvKqywyHB6CIWmjgb2f_dQ"/>
+</div>
+</div>
+</header>
+<!-- BACKGROUND TRADE CANVAS (Dimmed / Underlying Canvas) -->
+<main class="relative min-h-[calc(100vh-73px)] p-space-lg flex gap-space-lg transition-all duration-300 filter blur-[1px] opacity-75 pointer-events-none">
+<!-- Left 8-Column Area: Terminal Viewport & Charting -->
+<div class="flex-1 flex flex-col gap-5">
+<!-- Pair Ticker Header Bar -->
+<div class="bg-surface-container-lowest ambient-card rounded-[20px] p-5 flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-11 h-11 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-bold font-numeric-md">
+            Au
+          </div>
+<div>
+<div class="flex items-center gap-2">
+<h1 class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">XAU/USD</h1>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">Gold Spot / US Dollar</span>
+</div>
+<div class="flex items-baseline gap-3 mt-0.5">
+<span class="font-numeric-hero text-numeric-hero text-on-surface font-bold">$2,684.40</span>
+<span class="font-numeric-md text-numeric-md text-secondary font-semibold bg-secondary-fixed/25 px-2 py-0.5 rounded-full">+$18.60 (+0.70%)</span>
+</div>
+</div>
+</div>
+<!-- Quick Timeframe Segmented Control -->
+<div class="flex items-center bg-surface-container-low p-1 rounded-full">
+<button class="px-3 py-1 rounded-full text-label-md font-label-md text-on-surface-variant">15m</button>
+<button class="px-3 py-1 rounded-full text-label-md font-label-md text-on-surface-variant">1H</button>
+<button class="px-3.5 py-1 rounded-full text-label-md font-label-md bg-primary text-on-primary">4H</button>
+<button class="px-3 py-1 rounded-full text-label-md font-label-md text-on-surface-variant">1D</button>
+<button class="px-3 py-1 rounded-full text-label-md font-label-md text-on-surface-variant">1W</button>
+</div>
+</div>
+<!-- Chart Simulation Canvas -->
+<div class="bg-surface-container-lowest ambient-card rounded-[20px] p-6 h-[460px] flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between z-10">
+<div class="flex items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+<span>O: <strong class="font-numeric-sm text-on-surface">2,674.10</strong></span>
+<span>H: <strong class="font-numeric-sm text-on-surface">2,689.80</strong></span>
+<span>L: <strong class="font-numeric-sm text-on-surface">2,671.05</strong></span>
+<span>C: <strong class="font-numeric-sm text-on-surface">2,684.40</strong></span>
+<span class="text-secondary font-semibold">EMA 50: 2,668.20</span>
+</div>
+<span class="px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-label-sm font-label-sm">High-Frequency Tick Data Active</span>
+</div>
+<!-- Stylized SVG Candlestick & Area Grid Simulation -->
+<div class="w-full h-72 relative my-auto">
+<svg class="w-full h-full" fill="none" preserveaspectratio="none" viewbox="0 0 800 240">
+<line stroke="#EDE8F5" stroke-dasharray="3 3" x1="0" x2="800" y1="60" y2="60"></line>
+<line stroke="#EDE8F5" stroke-dasharray="3 3" x1="0" x2="800" y1="120" y2="120"></line>
+<line stroke="#EDE8F5" stroke-dasharray="3 3" x1="0" x2="800" y1="180" y2="180"></line>
+<path d="M0 200 C 150 190, 220 160, 320 130 C 440 100, 520 140, 620 90 C 700 50, 750 65, 800 40 L 800 240 L 0 240 Z" fill="url(#grad)" opacity="0.35"></path>
+<path d="M0 200 C 150 190, 220 160, 320 130 C 440 100, 520 140, 620 90 C 700 50, 750 65, 800 40" stroke="#006D38" stroke-linecap="round" stroke-width="2.5"></path>
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#66FE9D" stop-opacity="0.6"></stop>
+<stop offset="100%" stop-color="#F8F9FE" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<!-- Metric Base Row -->
+<div class="grid grid-cols-4 gap-4 pt-3 border-t border-surface-container-high/40">
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">24h High</div>
+<div class="font-numeric-md text-numeric-md text-on-surface font-semibold">$2,689.80</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">24h Low</div>
+<div class="font-numeric-md text-numeric-md text-on-surface font-semibold">$2,662.10</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Open Interest (Global)</div>
+<div class="font-numeric-md text-numeric-md text-on-surface font-semibold">$4.82B</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Consensus Confidence</div>
+<div class="font-numeric-md text-numeric-md text-secondary font-bold">92.4% Bullish</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right 4-Column Execution Ticket Preview (Under Drawer) -->
+<div class="w-[390px] hidden xl:flex flex-col gap-4">
+<div class="bg-surface-container-lowest ambient-card rounded-[20px] p-6 flex flex-col gap-5">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Order Entry</h2>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Instant Market</span>
+</div>
+<div class="grid grid-cols-2 gap-2 bg-surface-container-low p-1.5 rounded-full">
+<button class="py-2.5 rounded-full bg-primary text-on-primary font-label-md text-label-md">Buy / Long</button>
+<button class="py-2.5 rounded-full text-on-surface-variant font-label-md text-label-md">Sell / Short</button>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Lot Size / Volume</span>
+<div class="font-numeric-hero text-numeric-hero font-bold text-on-surface">1.25</div>
+</div>
+<button class="w-full py-4 rounded-full bg-primary text-on-primary font-headline-sm text-headline-sm cta-shadow">Place Market Order</button>
+</div>
+</div>
+</main>
+<!-- AMBIENT BACKDROP OVERLAY -->
+<div class="fixed inset-0 bg-on-surface/10 backdrop-blur-sm z-40 transition-opacity duration-300" id="drawer-backdrop"></div>
+<!-- THE HERO FOCUS: "Agent Deep-Dive" SLIDE-OVER DRAWER -->
+<aside aria-label="Agent Deep-Dive Panel" class="fixed top-0 right-0 w-full sm:w-[540px] md:w-[580px] lg:w-[600px] h-full bg-surface-container-lowest z-50 rounded-l-[32px] ambient-drawer flex flex-col transition-transform duration-300 ease-out overflow-hidden" id="agent-drawer">
+<!-- DRAWER HEADER -->
+<div class="px-7 pt-7 pb-4 flex flex-col gap-4 bg-surface-container-lowest shrink-0">
+<div class="flex items-center justify-between">
+<!-- Asset Context Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md font-bold tracking-tight">XAU/USD Gold Spot</span>
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">• $2,684.40</span>
+</div>
+<!-- Drawer Close Action -->
+<button aria-label="Close Deep-Dive panel" class="w-9 h-9 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center text-on-surface-variant hover:text-on-surface" id="close-drawer-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Title & Subtitle -->
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">Agent Deep-Dive</h2>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-numeric-sm">SYNCHRONIZED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Multi-Agent Consensus &amp; Institutional Intelligence Report</p>
+</div>
+<!-- HORIZONTAL SCROLLABLE TAB ROW (6 TABS) -->
+<nav aria-label="Report Views" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 pb-1">
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-primary text-on-primary" data-tab-target="technical">Technical</button>
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface" data-tab-target="macro">Macro</button>
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface" data-tab-target="derivatives">Derivatives</button>
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface" data-tab-target="whale-radar">Whale Radar</button>
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface" data-tab-target="bull-bear">Bull vs Bear</button>
+<button class="tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface" data-tab-target="roman-urdu">Roman Urdu Dossier</button>
+</nav>
+</div>
+<!-- DRAWER SCROLLABLE CANVAS -->
+<div class="flex-1 overflow-y-auto px-7 pb-8 pt-2 flex flex-col gap-6">
+<!-- ================= TAB PANE 1: TECHNICAL (DEFAULT ACTIVE) ================= -->
+<div class="tab-pane flex flex-col gap-5" id="pane-technical">
+<!-- Verdict Banner -->
+<div class="p-4 rounded-2xl bg-secondary-fixed/30 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</span>
+<div>
+<div class="text-[11px] font-bold uppercase tracking-wider text-on-secondary-fixed-variant">Algorithmic Verdict</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-secondary-fixed tracking-tight">STRONG BULLISH CONFLUENCE</div>
+</div>
+</div>
+<span class="font-numeric-md text-numeric-md font-bold px-3 py-1 rounded-full bg-surface-container-lowest text-secondary">
+            Score: 8.8 / 10
+          </span>
+</div>
+<!-- Key Stats Card -->
+<div class="bg-surface-container-low/70 rounded-2xl p-5 flex flex-col gap-3.5">
+<span class="text-label-sm font-label-sm font-bold text-on-surface-variant tracking-wider uppercase">Key Quantitative Metrics</span>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">RSI (14D)</span>
+<div class="flex items-center gap-2">
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">58.4</span>
+<span class="text-label-sm font-label-sm text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full font-medium">Neutral-Bullish</span>
+</div>
+</div>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">EMA 50 / 200 Spread</span>
+<div class="flex items-center gap-2">
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">+$42.80</span>
+<span class="text-label-sm font-label-sm text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full font-medium">Golden Cross Intact</span>
+</div>
+</div>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">ATR (14 Volatility)</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">$18.20</span>
+</div>
+<div class="flex items-center justify-between py-1">
+<span class="font-body-md text-body-md text-on-surface-variant">Key Resistance / Support</span>
+<div class="flex items-center gap-1.5 font-numeric-md text-numeric-md">
+<span class="font-semibold text-error">$2,705.00</span>
+<span class="text-on-surface-variant">/</span>
+<span class="font-semibold text-secondary">$2,668.50</span>
+</div>
+</div>
+</div>
+<!-- Plain-Text Reasoning Block -->
+<div class="bg-surface-container-lowest ambient-card rounded-2xl p-5 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+<span>Synthesized Agent Reasoning</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+            Gold continues to respect the multi-week ascending channel with sustained volume above the $2,670 liquidity pool. Momentum indicators confirm continuation without divergence, supporting upside targets toward the $2,714 weekly resistance.
+          </p>
+</div>
+<!-- Micro Indicator Strip -->
+<div class="grid grid-cols-2 gap-3">
+<div class="p-4 rounded-2xl bg-surface-container-low flex flex-col gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Order Book Imbalance</span>
+<span class="font-numeric-lg text-numeric-lg text-secondary font-bold">+64.2% Bid Heavy</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low flex flex-col gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Mean Reversion Risk</span>
+<span class="font-numeric-lg text-numeric-lg text-on-surface font-bold">12.4% (Low)</span>
+</div>
+</div>
+</div>
+<!-- ================= TAB PANE 2: MACRO ================= -->
+<div class="tab-pane hidden flex flex-col gap-5" id="pane-macro">
+<div class="p-4 rounded-2xl bg-secondary-fixed/30 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">
+<span class="material-symbols-outlined text-[18px]">public</span>
+</span>
+<div>
+<div class="text-[11px] font-bold uppercase tracking-wider text-on-secondary-fixed-variant">Macro Environment</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-secondary-fixed tracking-tight">SOVEREIGN TAILWIND ACCELERATING</div>
+</div>
+</div>
+<span class="font-numeric-md text-numeric-md font-bold px-3 py-1 rounded-full bg-surface-container-lowest text-secondary">
+            Score: 9.1 / 10
+          </span>
+</div>
+<div class="bg-surface-container-low/70 rounded-2xl p-5 flex flex-col gap-3.5">
+<span class="text-label-sm font-label-sm font-bold text-on-surface-variant tracking-wider uppercase">Global Macro Benchmarks</span>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">US Dollar Index (DXY)</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-error">101.42 (-0.38%)</span>
+</div>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">US 10Y Real Yield</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">1.78% (Compressing)</span>
+</div>
+<div class="flex items-center justify-between py-1">
+<span class="font-body-md text-body-md text-on-surface-variant">Central Bank Net Reserves</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-secondary">+68 Tonnes MoM</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest ambient-card rounded-2xl p-5 flex flex-col gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Macro Consensus Note</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+            Persistent central bank accumulation alongside softening real yields provides strong structural floors for gold. Rate cut projections in forthcoming FOMC cycles continue to dampen fiat holding yields, directing liquidity towards safe-haven metals.
+          </p>
+</div>
+</div>
+<!-- ================= TAB PANE 3: DERIVATIVES ================= -->
+<div class="tab-pane hidden flex flex-col gap-5" id="pane-derivatives">
+<div class="p-4 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface font-bold">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+</span>
+<div>
+<div class="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Derivatives Positioning</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">MILD LEVERAGE EXPANSION</div>
+</div>
+</div>
+<span class="font-numeric-md text-numeric-md font-bold px-3 py-1 rounded-full bg-surface-container-lowest text-on-surface">
+            Neutral-Bullish
+          </span>
+</div>
+<div class="bg-surface-container-low/70 rounded-2xl p-5 flex flex-col gap-3.5">
+<span class="text-label-sm font-label-sm font-bold text-on-surface-variant tracking-wider uppercase">Perpetuals &amp; Options Data</span>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">Aggregate Open Interest</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">$4.82 Billion</span>
+</div>
+<div class="flex items-center justify-between py-1 border-b border-surface-container-highest/60">
+<span class="font-body-md text-body-md text-on-surface-variant">Weighted Funding Rate</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">+0.0084% (Controlled)</span>
+</div>
+<div class="flex items-center justify-between py-1">
+<span class="font-body-md text-body-md text-on-surface-variant">25-Delta Put/Call Skew</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-secondary">-3.1% (Call Premium)</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest ambient-card rounded-2xl p-5 flex flex-col gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Derivatives Insight</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+            Options skews favor upside calls with concentrated open interest strikes at $2,700 and $2,725. Retail perp leverage remains within healthy parameters, mitigating the risk of sudden liquidation cascades.
+          </p>
+</div>
+</div>
+<!-- ================= TAB PANE 4: WHALE RADAR ================= -->
+<div class="tab-pane hidden flex flex-col gap-5" id="pane-whale-radar">
+<div class="p-4 rounded-2xl bg-secondary-fixed/30 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">
+<span class="material-symbols-outlined text-[18px]">radar</span>
+</span>
+<div>
+<div class="text-[11px] font-bold uppercase tracking-wider text-on-secondary-fixed-variant">Institutional Flow</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-secondary-fixed tracking-tight">ACTIVE ACCUMULATION PHASE</div>
+</div>
+</div>
+<span class="font-numeric-md text-numeric-md font-bold px-3 py-1 rounded-full bg-surface-container-lowest text-secondary">
+            Net Buy: +$340M
+          </span>
+</div>
+<div class="space-y-2.5">
+<div class="p-4 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-label-md text-label-md font-bold text-on-surface">London Fixing Block Trade</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">42,000 oz Gold Spot swept at $2,674.50</div>
+</div>
+</div>
+<span class="font-numeric-sm text-numeric-sm font-semibold text-secondary">14m ago</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div>
+<div class="font-label-md text-label-md font-bold text-on-surface">Zurich Bullion Desk Sweep</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Passive limit absorptions between $2,670 - $2,673</div>
+</div>
+</div>
+<span class="font-numeric-sm text-numeric-sm font-semibold text-secondary">48m ago</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest ambient-card rounded-2xl p-5 flex flex-col gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Whale Behavior Pattern</span>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+            Smart money footprints show consistent twap absorption during the London/NY session overlap. Large order sizes are being passively executed without driving aggressive slippage.
+          </p>
+</div>
+</div>
+<!-- ================= TAB PANE 5: BULL VS BEAR ================= -->
+<div class="tab-pane hidden flex flex-col gap-5" id="pane-bull-bear">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Bull Thesis Column -->
+<div class="bg-surface-container-low/70 rounded-2xl p-5 flex flex-col gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary flex items-center justify-center"></span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Bull Thesis</h3>
+</div>
+<ul class="flex flex-col gap-3.5">
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-secondary font-numeric-md leading-none text-base">✓</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">Structural higher low confirmed at $2,672 on 4h timeframe.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-secondary font-numeric-md leading-none text-base">✓</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">Consistent institutional accumulation during London/NY overlap.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-secondary font-numeric-md leading-none text-base">✓</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">DXY weakness providing continuous tailwinds for spot bullion.</span>
+</li>
+</ul>
+</div>
+<!-- Bear Thesis Column -->
+<div class="bg-surface-container-low/70 rounded-2xl p-5 flex flex-col gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-error flex items-center justify-center"></span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Bear Thesis</h3>
+</div>
+<ul class="flex flex-col gap-3.5">
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-error font-numeric-md leading-none text-base">⚑</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">Overhead sell wall clustered near psychological $2,700 barrier.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-error font-numeric-md leading-none text-base">⚑</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">Short-term funding rates slightly elevated across retail perps.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="font-bold text-error font-numeric-md leading-none text-base">⚑</span>
+<span class="font-body-md text-body-md text-on-surface leading-snug">Upcoming US Core CPI release risks sudden volatility spike.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Consensus Weighing -->
+<div class="p-5 rounded-2xl bg-surface-container-lowest ambient-card flex items-center justify-between">
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Weighted Bias</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">73% Bull / 27% Bear</div>
+</div>
+<div class="w-48 h-3 rounded-full bg-error/20 overflow-hidden flex">
+<div class="h-full bg-secondary" style="width: 73%;"></div>
+</div>
+</div>
+</div>
+<!-- ================= TAB PANE 6: ROMAN URDU DOSSIER ================= -->
+<div class="tab-pane hidden flex flex-col gap-5" id="pane-roman-urdu">
+<div class="bg-surface-container-lowest ambient-card rounded-2xl p-6 flex flex-col gap-5">
+<div class="flex items-center justify-between border-b border-surface-container-high/60 pb-4">
+<div class="flex items-center gap-2.5">
+<span class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">translate</span>
+</span>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Roman Urdu Intelligence Dossier</h3>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Desk Traders kay liye aasan aur wazeh tajziya</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-secondary-fixed/30 text-secondary font-bold">Mukammal Jaiza</span>
+</div>
+<!-- Section 1: Summary -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wide">Summary:</h4>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed pl-4 border-l-2 border-surface-container-high">
+              Sona (Gold) is waqt mazboot upward trend mein hai. $2,670 ka support level buyers ne bohot achi tarah defend kiya hai aur institutional volume musalsal flow ho raha hai.
+            </p>
+</div>
+<!-- Section 2: Technical Setup -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wide">Technical Setup:</h4>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed pl-4 border-l-2 border-surface-container-high">
+              4-hour chart pe higher-highs ban rahay hain aur EMA 50 support provide kar rahi hai. Jab tak $2,668 ka level nahi toot-ta, overall bias strongly bullish rahega.
+            </p>
+</div>
+<!-- Section 3: Hisaab Kitab & Recommendation -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<h4 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wide">Hisaab Kitab &amp; Recommendation:</h4>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed pl-4 border-l-2 border-surface-container-high">
+              Entry zone $2,680 - $2,682 k darmiyan behtareen hai. Target 1 $2,698 aur Target 2 $2,714 expect kiya ja sakta hai. Stop-loss $2,671 pe rakhna lazmi hai taaky risk strictly manage rahay.
+            </p>
+</div>
+</div>
+<!-- Quick Levels Matrix in Urdu -->
+<div class="grid grid-cols-3 gap-3">
+<div class="p-3.5 rounded-xl bg-surface-container-low text-center">
+<div class="text-label-sm font-label-sm text-on-surface-variant">Dakhila (Entry)</div>
+<div class="font-numeric-md text-numeric-md font-bold text-on-surface mt-0.5">$2,680 - 2,682</div>
+</div>
+<div class="p-3.5 rounded-xl bg-surface-container-low text-center">
+<div class="text-label-sm font-label-sm text-on-surface-variant">Hadaf (Target)</div>
+<div class="font-numeric-md text-numeric-md font-bold text-secondary mt-0.5">$2,714.00</div>
+</div>
+<div class="p-3.5 rounded-xl bg-surface-container-low text-center">
+<div class="text-label-sm font-label-sm text-on-surface-variant">Nuqsan Se Bachao (SL)</div>
+<div class="font-numeric-md text-numeric-md font-bold text-error mt-0.5">$2,671.00</div>
+</div>
+</div>
+</div>
+</div>
+<!-- DRAWER ACTION FOOTER -->
+<div class="p-6 bg-surface-container-lowest border-t border-surface-container-high/40 shrink-0 flex items-center gap-3">
+<button class="flex-1 py-3.5 px-5 rounded-full bg-primary text-on-primary font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 cta-shadow active:scale-[0.98] transition-all" type="button">
+<span>Execute Aligned Buy Order</span>
+<span class="font-numeric-sm text-numeric-sm font-normal opacity-70">(1.25 Lots)</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-center text-on-surface" title="Export Consensus PDF" type="button">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</aside>
+<!-- INTERACTIVE LOGIC (Vanilla JavaScript) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabButtons = document.querySelectorAll('.tab-trigger');
+      const tabPanes = document.querySelectorAll('.tab-pane');
+      const drawer = document.getElementById('agent-drawer');
+      const backdrop = document.getElementById('drawer-backdrop');
+      const closeBtn = document.getElementById('close-drawer-btn');
+
+      // Tab Switching Functionality
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const target = button.getAttribute('data-tab-target');
+
+          // Reset all tabs to inactive state
+          tabButtons.forEach(btn => {
+            btn.className = 'tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-low text-on-surface-variant hover:text-on-surface';
+          });
+
+          // Set clicked tab to active state
+          button.className = 'tab-trigger shrink-0 px-4 py-2 rounded-full font-label-md text-label-md transition-all duration-150 bg-primary text-on-primary';
+
+          // Toggle tab panes
+          tabPanes.forEach(pane => {
+            if (pane.id === `pane-${target}`) {
+              pane.classList.remove('hidden');
+            } else {
+              pane.classList.add('hidden');
+            }
+          });
+        });
+      });
+
+      // Drawer Open/Close toggle handlers for demonstration
+      function closeDrawer() {
+        drawer.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+      }
+
+      function openDrawer() {
+        drawer.classList.remove('translate-x-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeDrawer);
+      }
+      if (backdrop) {
+        backdrop.addEventListener('click', closeDrawer);
+      }
+
+      // Allow pressing ESC to close drawer
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeDrawer();
+        }
+      });
+    });
+  </script>
+</body></html>

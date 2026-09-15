@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Signals &amp; Alpha Audit — Nexus Capital</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed": "#66fe9d",
+            "primary": "#000000",
+            "surface-dim": "#d9dadf",
+            "on-background": "#191c1f",
+            "inverse-surface": "#2e3134",
+            "inverse-on-surface": "#eff0f5",
+            "secondary-fixed-dim": "#44e184",
+            "tertiary-fixed-dim": "#fabc4d",
+            "surface-bright": "#f8f9fe",
+            "surface-container-highest": "#e1e2e7",
+            "on-error": "#ffffff",
+            "outline-variant": "#c8c5cb",
+            "tertiary": "#000000",
+            "on-primary-container": "#858388",
+            "surface-tint": "#5f5e63",
+            "on-primary": "#ffffff",
+            "background": "#f8f9fe",
+            "on-surface": "#191c1f",
+            "error-container": "#ffdad6",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#ffdead",
+            "secondary-container": "#66fe9d",
+            "primary-container": "#1b1b1f",
+            "on-secondary-fixed": "#00210d",
+            "surface-container-low": "#f2f3f8",
+            "on-primary-fixed-variant": "#47464b",
+            "error": "#ba1a1a",
+            "surface": "#f8f9fe",
+            "on-secondary-fixed-variant": "#005229",
+            "inverse-primary": "#c8c5cb",
+            "on-secondary": "#ffffff",
+            "on-error-container": "#93000a",
+            "secondary": "#006d38",
+            "surface-container-high": "#e7e8ed",
+            "on-tertiary-container": "#af7a05",
+            "on-secondary-container": "#00743c",
+            "surface-container-lowest": "#ffffff",
+            "on-surface-variant": "#47464b",
+            "on-tertiary-fixed": "#281900",
+            "outline": "#78767b",
+            "on-tertiary-fixed-variant": "#604100",
+            "primary-fixed-dim": "#c8c5cb",
+            "on-primary-fixed": "#1b1b1f",
+            "primary-fixed": "#e4e1e7",
+            "surface-container": "#edeef3",
+            "tertiary-container": "#281900",
+            "surface-variant": "#e1e2e7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "gutter": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "numeric-md": ["JetBrains Mono"],
+            "numeric-hero": ["JetBrains Mono"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "numeric-hero-mobile": ["JetBrains Mono"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "numeric-lg": ["JetBrains Mono"],
+            "numeric-sm": ["JetBrains Mono"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["13px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "numeric-md": ["15px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "numeric-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-hero-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "display-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .ambient-card {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.025);
+    }
+    .ambient-pop {
+      box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.07), 0 6px 16px -3px rgba(0, 0, 0, 0.03);
+    }
+    .cta-shadow {
+      box-shadow: 0 8px 20px -4px rgba(17, 17, 21, 0.22);
+    }
+  </style>
+</head>
+<body class="bg-surface-container-low text-on-surface font-body-md text-body-md antialiased min-h-screen pb-space-xl selection:bg-surface-container-highest">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-space-lg py-space-md max-w-full">
+<!-- Left: Logo & Wordmark -->
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface flex items-center gap-2">
+<div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">polyline</span>
+</div>
+<span class="tracking-tight text-on-surface">Nexus Capital</span>
+</div>
+<!-- Center: Navigation Links -->
+<nav class="hidden md:flex items-center gap-1.5 bg-surface-container px-1.5 py-1 rounded-full">
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#trade">Trade</a>
+<a class="bg-primary text-on-primary rounded-full px-4 py-1.5 font-label-md text-label-md transition-all duration-150" href="#signals">Signals</a>
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#positions">Positions</a>
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#calendar">Calendar</a>
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#vault">Vault</a>
+</nav>
+<!-- Right: Trailing Actions -->
+<div class="flex items-center gap-3">
+<!-- MT5 Status -->
+<div class="hidden sm:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full ambient-card">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface">MT5 Connected</span>
+</div>
+<!-- Account Balance -->
+<div class="hidden sm:flex items-center px-3 py-1.5 bg-surface-container-lowest rounded-full ambient-card">
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">$84,250.00</span>
+</div>
+<!-- Notifications -->
+<button aria-label="Notifications" class="w-9 h-9 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high active:scale-[0.98] transition-all duration-150 ambient-card" type="button">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+</button>
+<!-- Profile Avatar -->
+<div class="w-9 h-9 rounded-full bg-surface-container-lowest p-0.5 ambient-card flex items-center justify-center">
+<img class="w-full h-full rounded-full object-cover" data-alt="Close up professional portrait of an institutional algorithmic portfolio manager wearing a minimalist dark charcoal collar shirt in a soft atmospheric light office studio with pristine reflections." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFCOLI5amR3kSFKmqJ_NuY3KlYkilSbMjEf7CG33wT9JgXcbFtmuV0E2JHzAQWcukwjXFpl7YnpcvkOIckt1CZ7HeneJCVXx32wdOtWqhcXlt_S11qKMbxF9swvcxSka-FWOKJWqgVpBKS8eRsWp28MlESl5UPRgazpx5oPcABLtvvdE8cr7wp3vqw-h0oTuf47IdYY9vRt5EFE4etUOEZgxXd8ZS4k5dO_pvU-3O2Fj-Tj2aDFiwvPA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+<!-- Page Header / Sub-bar -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Signals &amp; Alpha Audit</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Multi-agent heuristic detection against retail liquidation traps</p>
+</div>
+<div class="flex items-center gap-2 self-start sm:self-auto">
+<button class="inline-flex items-center gap-2 bg-surface-container-lowest text-on-surface px-4 py-2 rounded-full font-label-md text-label-md ambient-card hover:bg-surface-container-high active:scale-[0.98] transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[17px] text-on-surface-variant">tune</span>
+<span>Manage Channels</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Top Parser Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 sm:p-6 ambient-card mb-8">
+<div class="relative">
+<textarea class="w-full bg-surface-container-low text-on-surface placeholder:text-outline font-body-md text-body-md p-3.5 rounded-xl border-0 focus:ring-2 focus:ring-surface-tint outline-none resize-none transition-all duration-150" placeholder="Paste a signal from Telegram, WhatsApp, Discord, or X (e.g. BUY XAUUSD @ 2680 SL 2672 TP 2710)..." rows="2"></textarea>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3.5 pt-1">
+<!-- Source Selector -->
+<div class="inline-flex items-center gap-2 bg-surface-container px-3.5 py-1.5 rounded-full cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">send</span>
+<span class="font-label-md text-label-md text-on-surface">Telegram Channel</span>
+<span class="material-symbols-outlined text-[15px] text-outline">unfold_more</span>
+</div>
+<!-- Parse CTA Button -->
+<button class="inline-flex items-center justify-center gap-2 bg-primary text-on-primary rounded-full px-6 py-2.5 font-label-md text-label-md cta-shadow active:scale-[0.98] hover:bg-neutral-800 transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">neurology</span>
+<span>Parse &amp; Audit</span>
+</button>
+</div>
+</div>
+<!-- Feed Section Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+<div class="flex items-center gap-2.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Signal Audits (Live Stream)</h2>
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed-dim opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary"></span>
+</span>
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+<button class="bg-primary text-on-primary px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap" type="button">All</button>
+<button class="bg-surface-container text-on-surface-variant hover:text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" type="button">Verified Alpha</button>
+<button class="bg-surface-container text-on-surface-variant hover:text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" type="button">Retail Traps</button>
+<button class="bg-surface-container text-on-surface-variant hover:text-on-surface px-3 py-1 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" type="button">High Risk</button>
+</div>
+</div>
+<!-- Feed Stream Cards -->
+<div class="space-y-5 sm:space-y-6">
+<!-- CARD 1: VERIFIED_ALPHA -->
+<article class="bg-surface-container-lowest rounded-3xl p-5 sm:p-6 ambient-card transition-all duration-200">
+<!-- Header row -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface">send</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">VIP Sniper Signals</span>
+<span class="text-outline text-xs">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">2m ago</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-[#E6F9F0] text-secondary font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              VERIFIED_ALPHA
+            </span>
+<span class="font-numeric-sm text-numeric-sm text-secondary bg-surface-container px-2.5 py-1 rounded-full">
+              Score: 12/100 (Safe)
+            </span>
+</div>
+</div>
+<!-- Asset & Metrics Grid -->
+<div class="bg-surface-container-low rounded-2xl p-4 my-2">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-3.5 pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">XAU/USD Gold Spot</span>
+<span class="bg-secondary text-on-secondary font-label-sm text-label-sm px-2.5 py-0.5 rounded-full">BUY</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Risk-Reward:</span>
+<span class="font-numeric-md text-numeric-md text-on-surface font-semibold">1:2.9</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Entry</span>
+<span class="font-numeric-lg text-numeric-lg text-on-surface">2,682.40</span>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Stop Loss</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-error">2,671.20</span>
+<span class="font-numeric-sm text-numeric-sm text-error">(-0.42%)</span>
+</div>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Take Profit</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-secondary">2,714.50</span>
+<span class="font-numeric-sm text-numeric-sm text-secondary">(+1.20%)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Accordion trigger -->
+<div class="mt-4 pt-1">
+<button class="accordion-toggle flex items-center justify-between w-full py-1 text-left group" data-target="reasons-1" type="button">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors flex items-center gap-1">
+              Why this verdict?
+            </span>
+<span class="material-symbols-outlined text-[18px] text-outline transition-transform duration-200 chevron-icon">expand_more</span>
+</button>
+<div class="accordion-content hidden mt-3 space-y-2 pt-2 border-t border-surface-container" id="reasons-1">
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-secondary font-bold">✓</span>
+              Institutional order block aligned with London/NY liquidity overlap.
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-secondary font-bold">✓</span>
+              Aggregate funding rate remains neutral; no crowded retail liquidation cluster.
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-secondary font-bold">✓</span>
+              Higher-timeframe market structure intact on 4H/Daily.
+            </p>
+</div>
+</div>
+</article>
+<!-- CARD 2: RETAIL_TRAP_SUSPECTED -->
+<article class="bg-surface-container-lowest rounded-3xl p-5 sm:p-6 ambient-card transition-all duration-200">
+<!-- Header row -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface">forum</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Crypto Whale Leaks</span>
+<span class="text-outline text-xs">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">14m ago</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+              RETAIL_TRAP_SUSPECTED
+            </span>
+<span class="font-numeric-sm text-numeric-sm text-error bg-surface-container px-2.5 py-1 rounded-full">
+              Score: 88/100 (Critical Trap)
+            </span>
+</div>
+</div>
+<!-- Asset & Metrics Grid -->
+<div class="bg-surface-container-low rounded-2xl p-4 my-2">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-3.5 pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">BTC/USDT</span>
+<span class="bg-error text-on-error font-label-sm text-label-sm px-2.5 py-0.5 rounded-full">SELL</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Risk-Reward:</span>
+<span class="font-numeric-md text-numeric-md text-on-surface font-semibold">1:6.6</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Entry</span>
+<span class="font-numeric-lg text-numeric-lg text-on-surface">97,850.00</span>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Stop Loss</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-error">98,400.00</span>
+</div>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Take Profit</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-secondary">94,200.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Accordion trigger -->
+<div class="mt-4 pt-1">
+<button class="accordion-toggle flex items-center justify-between w-full py-1 text-left group" data-target="reasons-2" type="button">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors flex items-center gap-1">
+              Why this verdict?
+            </span>
+<span class="material-symbols-outlined text-[18px] text-outline transition-transform duration-200 chevron-icon">expand_more</span>
+</button>
+<div class="accordion-content hidden mt-3 space-y-2 pt-2 border-t border-surface-container" id="reasons-2">
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-error font-bold">✕</span>
+              Signal posted directly into resting ask liquidity wall ($97.9k-$98.2k).
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-error font-bold">✕</span>
+              34,000 retail short liquidations pooled just above SL at $98.45k.
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-error font-bold">✕</span>
+              Spot CVD diverging bullish while perp volume spikes — classic fakeout distribution.
+            </p>
+</div>
+</div>
+</article>
+<!-- CARD 3: HIGH_RISK_VOLATILE -->
+<article class="bg-surface-container-lowest rounded-3xl p-5 sm:p-6 ambient-card transition-all duration-200">
+<!-- Header row -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface">tag</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Macro Pulse FX</span>
+<span class="text-outline text-xs">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">38m ago</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-[#FDF6E9] text-[#9a6300] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E5A93C]"></span>
+              HIGH_RISK_VOLATILE
+            </span>
+<span class="font-numeric-sm text-numeric-sm text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-full">
+              Score: 61/100 (Elevated Risk)
+            </span>
+</div>
+</div>
+<!-- Asset & Metrics Grid -->
+<div class="bg-surface-container-low rounded-2xl p-4 my-2">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-3.5 pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">EUR/USD</span>
+<span class="bg-secondary text-on-secondary font-label-sm text-label-sm px-2.5 py-0.5 rounded-full">BUY</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Risk-Reward:</span>
+<span class="font-numeric-md text-numeric-md text-on-surface font-semibold">1:2.8</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Entry</span>
+<span class="font-numeric-lg text-numeric-lg text-on-surface">1.0842</span>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Stop Loss</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-error">1.0815</span>
+</div>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Take Profit</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-secondary">1.0920</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Accordion trigger -->
+<div class="mt-4 pt-1">
+<button class="accordion-toggle flex items-center justify-between w-full py-1 text-left group" data-target="reasons-3" type="button">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors flex items-center gap-1">
+              Why this verdict?
+            </span>
+<span class="material-symbols-outlined text-[18px] text-outline transition-transform duration-200 chevron-icon">expand_more</span>
+</button>
+<div class="accordion-content hidden mt-3 space-y-2 pt-2 border-t border-surface-container" id="reasons-3">
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-[#E5A93C] font-bold">⚠</span>
+              US Core CPI release scheduled in 45 minutes; slippage volatility expected &gt; 18 pips.
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-[#E5A93C] font-bold">⚠</span>
+              Spread widening detected across interbank tier-1 liquidity providers.
+            </p>
+</div>
+</div>
+</article>
+<!-- CARD 4: VERIFIED_ALPHA -->
+<article class="bg-surface-container-lowest rounded-3xl p-5 sm:p-6 ambient-card transition-all duration-200">
+<!-- Header row -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center">
+<span class="font-label-sm text-label-sm font-bold text-on-surface">𝕏</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">@InstitutionalQuant</span>
+<span class="text-outline text-xs">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">1h ago</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-[#E6F9F0] text-secondary font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              VERIFIED_ALPHA
+            </span>
+<span class="font-numeric-sm text-numeric-sm text-secondary bg-surface-container px-2.5 py-1 rounded-full">
+              Score: 18/100 (Safe)
+            </span>
+</div>
+</div>
+<!-- Asset & Metrics Grid -->
+<div class="bg-surface-container-low rounded-2xl p-4 my-2">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-3.5 pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">SOL/USD</span>
+<span class="bg-secondary text-on-secondary font-label-sm text-label-sm px-2.5 py-0.5 rounded-full">BUY</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Risk-Reward:</span>
+<span class="font-numeric-md text-numeric-md text-on-surface font-semibold">1:2.8</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Entry</span>
+<span class="font-numeric-lg text-numeric-lg text-on-surface">178.50</span>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Stop Loss</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-error">173.80</span>
+</div>
+</div>
+<div>
+<span class="block font-body-sm text-body-sm text-on-surface-variant mb-0.5">Take Profit</span>
+<div class="flex items-baseline gap-1.5 flex-wrap">
+<span class="font-numeric-lg text-numeric-lg text-secondary">192.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Accordion trigger -->
+<div class="mt-4 pt-1">
+<button class="accordion-toggle flex items-center justify-between w-full py-1 text-left group" data-target="reasons-4" type="button">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface transition-colors flex items-center gap-1">
+              Why this verdict?
+            </span>
+<span class="material-symbols-outlined text-[18px] text-outline transition-transform duration-200 chevron-icon">expand_more</span>
+</button>
+<div class="accordion-content hidden mt-3 space-y-2 pt-2 border-t border-surface-container" id="reasons-4">
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-secondary font-bold">✓</span>
+              Spot volume breakout confirmed on 1H candle close.
+            </p>
+<p class="font-body-sm text-body-sm text-on-surface flex items-start gap-2">
+<span class="text-secondary font-bold">✓</span>
+              Open interest growth backed by net spot accumulation, not leverage overextension.
+            </p>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Interactive Accordion Logic -->
+<script>
+    document.querySelectorAll('.accordion-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const targetContent = document.getElementById(targetId);
+        const icon = button.querySelector('.chevron-icon');
+        
+        if (targetContent) {
+          const isHidden = targetContent.classList.contains('hidden');
+          if (isHidden) {
+            targetContent.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+          } else {
+            targetContent.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+          }
+        }
+      });
+    });
+  </script>
+</body></html>

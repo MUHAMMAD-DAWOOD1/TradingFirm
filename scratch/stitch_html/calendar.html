@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexus Capital — Economic Calendar &amp; Macro Catalysts</title>
+<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-fixed": "#00210d",
+            "on-primary-container": "#858388",
+            "on-surface-variant": "#47464b",
+            "surface-container-high": "#e7e8ed",
+            "on-surface": "#191c1f",
+            "primary": "#000000",
+            "on-secondary": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-secondary-container": "#00743c",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "surface-dim": "#d9dadf",
+            "secondary-fixed-dim": "#44e184",
+            "tertiary": "#000000",
+            "primary-fixed-dim": "#c8c5cb",
+            "error": "#ba1a1a",
+            "surface-container-highest": "#e1e2e7",
+            "surface": "#f8f9fe",
+            "outline-variant": "#c8c5cb",
+            "inverse-surface": "#2e3134",
+            "on-tertiary-container": "#af7a05",
+            "surface-variant": "#e1e2e7",
+            "primary-container": "#1b1b1f",
+            "on-primary-fixed": "#1b1b1f",
+            "secondary-container": "#66fe9d",
+            "surface-bright": "#f8f9fe",
+            "surface-container-low": "#f2f3f8",
+            "on-secondary-fixed-variant": "#005229",
+            "secondary": "#006d38",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed-variant": "#47464b",
+            "secondary-fixed": "#66fe9d",
+            "tertiary-fixed": "#ffdead",
+            "outline": "#78767b",
+            "surface-container": "#edeef3",
+            "tertiary-fixed-dim": "#fabc4d",
+            "on-tertiary-fixed-variant": "#604100",
+            "inverse-on-surface": "#eff0f5",
+            "background": "#f8f9fe",
+            "primary-fixed": "#e4e1e7",
+            "surface-tint": "#5f5e63",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#281900",
+            "tertiary-container": "#281900",
+            "on-background": "#191c1f",
+            "inverse-primary": "#c8c5cb",
+            "on-error": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter-mobile": "0.75rem",
+            "gutter": "1.25rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "margin-mobile": "1rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "numeric-sm": ["JetBrains Mono"],
+            "body-md": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "numeric-md": ["JetBrains Mono"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "numeric-hero": ["JetBrains Mono"],
+            "numeric-lg": ["JetBrains Mono"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "numeric-hero-mobile": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "numeric-md": ["15px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "numeric-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "numeric-hero-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .ambient-card {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.025);
+    }
+    .ambient-subtle {
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- Top Navigation Bar (Derived directly from Shared Components JSON: TopNavBar) -->
+<header class="bg-surface docked full-width top-0 z-50">
+<div class="flex justify-between items-center w-full px-space-lg py-space-md max-w-full">
+<!-- Left: Logo & Navigation cluster -->
+<div class="flex items-center gap-8">
+<!-- Brand Logo -->
+<a class="text-headline-sm font-headline-sm font-bold text-on-surface flex items-center gap-2 tracking-tight group" href="#">
+<div class="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-sm group-hover:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-base">change_history</span>
+</div>
+<span>Nexus Capital</span>
+</a>
+<!-- Navigation Links: Calendar is ACTIVE as requested -->
+<nav class="hidden md:flex items-center gap-1.5 bg-surface-container-low p-1 rounded-full">
+<!-- Inactive: Trade -->
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Trade</a>
+<!-- Inactive: Signals -->
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Signals</a>
+<!-- Inactive: Positions -->
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Positions</a>
+<!-- ACTIVE: Calendar (Exact JSON styles mapped) -->
+<a class="bg-primary text-on-primary rounded-full px-4 py-1.5 font-label-md text-label-md shadow-sm" href="#">Calendar</a>
+<!-- Inactive: Vault -->
+<a class="text-on-surface-variant hover:text-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Vault</a>
+</nav>
+</div>
+<!-- Right: Broker status, Liquidity equity, notifications & profile -->
+<div class="flex items-center gap-3">
+<!-- MT5 Connected Badge -->
+<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-lowest ambient-subtle">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">MT5 Connected</span>
+</div>
+<!-- Equity Badge -->
+<div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container-lowest ambient-subtle">
+<span class="text-on-surface-variant font-label-sm text-label-sm">Equity:</span>
+<span class="font-numeric-md text-numeric-md font-semibold text-on-surface">$84,250.00</span>
+</div>
+<!-- Trailing Icon Action: Notifications -->
+<button aria-label="Notifications" class="w-9 h-9 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant hover:text-on-surface ambient-subtle relative active:scale-[0.98] transition-all duration-150">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
+</button>
+<!-- Profile Avatar -->
+<div class="flex items-center">
+<img class="w-9 h-9 rounded-full object-cover ring-2 ring-surface-container-high" data-alt="Close up professional portrait of a senior quantitative trader with confident relaxed demeanor, minimalist light grey clothing, studio lighting with soft high-key ambient highlights in a high-tech modern financial firm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuURSiNrKyZeodgHgqarQfM7jkBM25OdTtUVrGRtONcRHPV6exgQBsLan189GjgM4dOTcA-NgZZbbxudRv5sjix3fotdohrGgvyY3GEtymiOFRU5k7IolCyoK1XZdnPHJj3CbR3S-hLIzWI6qy2hgHWon6E33xas26WpC0Cghga9Sh455nXeCct26Jn-AshczXXRZFxud4QOAv-DBHD8G9kIRUQYo6qwKDeMv-uUsiOi9vDeCtZ6DPAw"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Primary Main Canvas -->
+<main class="flex-1 max-w-[1440px] w-full mx-auto px-6 lg:px-8 py-6 flex flex-col gap-6">
+<!-- Page Header Area -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1.5">
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Macro Intelligence</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">• Live GMT Sync</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">Economic Calendar &amp; Macro Catalysts</h1>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1">Institutional event horizon, real-time central bank releases, and liquidity impact tracking</p>
+</div>
+<!-- Quick Controls: Filter & Date Range -->
+<div class="flex items-center gap-3">
+<!-- Date indicator pill -->
+<div class="flex items-center gap-2 px-3.5 py-2 bg-surface-container-lowest rounded-full ambient-subtle text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span>
+<span class="font-label-md text-label-md">Today, Dec 12</span>
+</div>
+<!-- Filter Toggle -->
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow-sm active:scale-[0.98] transition-transform duration-150">
+<span class="material-symbols-outlined text-[17px]">tune</span>
+<span>Filter: High &amp; Med</span>
+</button>
+</div>
+</section>
+<!-- Top Slim Horizontal Strip (Market Sessions) -->
+<section class="w-full bg-surface-container-lowest rounded-2xl p-4 ambient-card">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 divide-y md:divide-y-0 md:divide-x divide-surface-container-high">
+<!-- Session 1: London -->
+<div class="flex items-center justify-between px-2 pt-1 md:pt-0">
+<div class="flex items-center gap-3">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<div>
+<div class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span>London</span>
+<span class="font-numeric-sm text-numeric-sm px-1.5 py-0.5 rounded-full bg-secondary-container/40 text-on-secondary-container">Active</span>
+</div>
+<div class="font-numeric-sm text-numeric-sm text-on-surface-variant">08:00 – 16:30 GMT</div>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-low font-label-sm text-label-sm text-secondary font-semibold">High Liquidity</span>
+</div>
+</div>
+<!-- Session 2: London / NY Overlap -->
+<div class="flex items-center justify-between px-2 pt-3 md:pt-0 md:pl-6">
+<div class="flex items-center gap-3">
+<span class="relative flex h-3 w-3">
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<div>
+<div class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span>London / NY Overlap</span>
+<span class="font-numeric-sm text-numeric-sm px-1.5 py-0.5 rounded-full bg-secondary-container/40 text-on-secondary-container">Peak</span>
+</div>
+<div class="font-numeric-sm text-numeric-sm text-on-surface-variant">13:00 – 16:30 GMT</div>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2.5 py-1 rounded-full bg-secondary-fixed/20 font-label-sm text-label-sm text-on-secondary-fixed-variant font-semibold">Peak Volume Wave</span>
+</div>
+</div>
+<!-- Session 3: Tokyo / Asian -->
+<div class="flex items-center justify-between px-2 pt-3 md:pt-0 md:pl-6">
+<div class="flex items-center gap-3">
+<span class="relative flex h-3 w-3">
+<span class="relative inline-flex rounded-full h-3 w-3 bg-outline-variant"></span>
+</span>
+<div>
+<div class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+<span>Tokyo / Asian</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant">Upcoming</span>
+</div>
+<div class="font-numeric-sm text-numeric-sm text-on-surface-variant">Opens 00:00 GMT (in 6h 15m)</div>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant">Quiet Range</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Content Container - Single Vertical List of Economic Events -->
+<section class="w-full bg-surface-container-lowest rounded-3xl ambient-card flex flex-col overflow-hidden">
+<!-- Filter and Action Bar Header -->
+<div class="px-6 py-4 border-b border-surface-container flex flex-wrap items-center justify-between gap-4">
+<!-- Quick Filter Tags -->
+<div class="flex items-center gap-2">
+<button class="px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-colors">
+            All Impacts
+          </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>High Impact Only (Red)</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors">
+            US &amp; EU Focus
+          </button>
+</div>
+<!-- Search / Filter Ticker Input -->
+<div class="flex items-center gap-3">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px]">search</span>
+<input class="w-64 pl-9 pr-4 py-1.5 rounded-full bg-surface-container-low border-0 text-on-surface font-body-sm text-body-sm placeholder:text-on-surface-variant focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search release, ticker or agency..." type="text"/>
+</div>
+<div class="text-on-surface-variant font-numeric-sm text-numeric-sm">
+<span>Showing <strong class="text-on-surface">6</strong> Releases</span>
+</div>
+</div>
+</div>
+<!-- Events List Rows -->
+<div class="divide-y divide-surface-container flex flex-col">
+<!-- Row 1: Active Now Event (FOMC Rate Decision) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<!-- Flag & Event details -->
+<div class="flex items-center gap-4 min-w-[340px]">
+<!-- Country Flag Badge -->
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇺🇸
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">USD</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Central Bank</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">FOMC Rate Decision &amp; Press Conference</h3>
+</div>
+</div>
+<!-- Impact Indicator -->
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="font-label-md text-label-md text-error">High Impact</span>
+</div>
+<!-- Forecast vs Previous -->
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: <strong class="text-on-surface">4.50%</strong></span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: 4.75%</span>
+</div>
+<!-- Countdown Timer -->
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-secondary font-medium">
+<span class="material-symbols-outlined text-[17px]">timer</span>
+<span>Live: 00:02:15 elapsed</span>
+</div>
+<!-- Status Pill: ACTIVE NOW -->
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container font-label-md text-label-md font-semibold">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span>ACTIVE NOW</span>
+</span>
+</div>
+</div>
+<!-- Row 2: Imminent Event (US Core CPI) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-center gap-4 min-w-[340px]">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇺🇸
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">USD</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Inflation Metric</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">US Core CPI (MoM)</h3>
+</div>
+</div>
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="font-label-md text-label-md text-error">High Impact</span>
+</div>
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: <strong class="text-on-surface">0.3%</strong></span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: 0.2%</span>
+</div>
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-error font-medium">
+<span class="material-symbols-outlined text-[17px]">hourglass_top</span>
+<span>Starts in 18 mins</span>
+</div>
+<!-- Status Pill: IMMINENT -->
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-error-container text-on-error-container font-label-md text-label-md font-semibold">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>IMMINENT</span>
+</span>
+</div>
+</div>
+<!-- Row 3: Upcoming Event (ECB Monetary Policy Statement) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-center gap-4 min-w-[340px]">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇪🇺
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">EUR</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Central Bank</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">ECB Monetary Policy Statement</h3>
+</div>
+</div>
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="font-label-md text-label-md text-error">High Impact</span>
+</div>
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: <strong class="text-on-surface">3.25%</strong></span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: 3.50%</span>
+</div>
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">schedule</span>
+<span>Starts in 1h 42m</span>
+</div>
+<!-- Status Pill: UPCOMING -->
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md font-semibold">
+<span>UPCOMING</span>
+</span>
+</div>
+</div>
+<!-- Row 4: Upcoming Event (Initial Jobless Claims) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-center gap-4 min-w-[340px]">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇺🇸
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">USD</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Labor Market</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Initial Jobless Claims</h3>
+</div>
+</div>
+<!-- Medium Impact Indicator -->
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim"></span>
+<span class="font-label-md text-label-md text-on-tertiary-container">Medium Impact</span>
+</div>
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: <strong class="text-on-surface">215K</strong></span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: 224K</span>
+</div>
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">schedule</span>
+<span>Starts in 3h 10m</span>
+</div>
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md font-semibold">
+<span>UPCOMING</span>
+</span>
+</div>
+</div>
+<!-- Row 5: Upcoming Event (U.S. Crude Oil Inventories) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div class="flex items-center gap-4 min-w-[340px]">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇺🇸
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">USD</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Commodities</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">U.S. Crude Oil Inventories</h3>
+</div>
+</div>
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim"></span>
+<span class="font-label-md text-label-md text-on-tertiary-container">Medium Impact</span>
+</div>
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: <strong class="text-on-surface">-1.20M</strong></span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: -0.85M</span>
+</div>
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">schedule</span>
+<span>Starts in 5h 30m</span>
+</div>
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md font-semibold">
+<span>UPCOMING</span>
+</span>
+</div>
+</div>
+<!-- Row 6: Completed Event (UK GDP QoQ Prelim) -->
+<div class="px-6 py-4.5 hover:bg-surface-container-low/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4 opacity-75">
+<div class="flex items-center gap-4 min-w-[340px]">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-low flex items-center justify-center font-numeric-md font-bold text-on-surface tracking-wider">
+              🇬🇧
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-numeric-sm text-numeric-sm font-semibold text-on-surface-variant">GBP</span>
+<span class="text-outline">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Economic Growth</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">UK GDP (QoQ Prelim)</h3>
+</div>
+</div>
+<div class="flex items-center gap-2 lg:w-36">
+<span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Low Impact</span>
+</div>
+<div class="lg:w-56 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span>Forecast: 0.3%</span>
+<span class="mx-1.5 text-outline-variant">|</span>
+<span>Prev: 0.1%</span>
+</div>
+<div class="flex items-center gap-2 lg:w-44 font-numeric-sm text-numeric-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">check_circle</span>
+<span>Completed 45m ago</span>
+</div>
+<!-- Status Pill: COMPLETED -->
+<div class="flex justify-end lg:w-40">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant font-numeric-sm text-numeric-sm font-medium">
+<span>Actual: 0.3% (Met)</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Footer Summary / Liquidity Advisory Bar -->
+<div class="bg-surface-container-low/60 px-6 py-3.5 border-t border-surface-container flex items-center justify-between flex-wrap gap-3">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified_user</span>
+<span class="font-body-sm text-body-sm">
+            Algorithmic execution volatility buffer recommended ±15 minutes around High Impact releases.
+          </span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant font-numeric-sm text-numeric-sm">
+<span>Latency: <strong class="text-on-surface">1.2ms</strong></span>
+<span>Feed: <strong class="text-secondary font-semibold">Institutional Direct</strong></span>
+</div>
+</div>
+</section>
+</main>
+</body></html>

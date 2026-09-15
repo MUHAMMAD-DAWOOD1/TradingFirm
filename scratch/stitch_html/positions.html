@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexus Capital — Positions</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed-variant": "#47464b",
+            "outline-variant": "#c8c5cb",
+            "tertiary-container": "#281900",
+            "primary-container": "#1b1b1f",
+            "surface-dim": "#d9dadf",
+            "on-secondary": "#ffffff",
+            "on-background": "#191c1f",
+            "surface-tint": "#5f5e63",
+            "on-primary-container": "#858388",
+            "secondary": "#006d38",
+            "primary": "#000000",
+            "error": "#ba1a1a",
+            "background": "#f8f9fe",
+            "surface-container": "#edeef3",
+            "primary-fixed": "#e4e1e7",
+            "surface-container-highest": "#e1e2e7",
+            "on-error": "#ffffff",
+            "tertiary": "#000000",
+            "tertiary-fixed": "#ffdead",
+            "secondary-container": "#66fe9d",
+            "outline": "#78767b",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#281900",
+            "tertiary-fixed-dim": "#fabc4d",
+            "on-tertiary-fixed-variant": "#604100",
+            "on-tertiary-container": "#af7a05",
+            "surface-variant": "#e1e2e7",
+            "inverse-on-surface": "#eff0f5",
+            "on-secondary-container": "#00743c",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f2f3f8",
+            "primary-fixed-dim": "#c8c5cb",
+            "secondary-fixed-dim": "#44e184",
+            "secondary-fixed": "#66fe9d",
+            "on-secondary-fixed": "#00210d",
+            "on-tertiary": "#ffffff",
+            "surface": "#f8f9fe",
+            "on-secondary-fixed-variant": "#005229",
+            "error-container": "#ffdad6",
+            "on-surface-variant": "#47464b",
+            "inverse-surface": "#2e3134",
+            "on-surface": "#191c1f",
+            "on-primary-fixed": "#1b1b1f",
+            "inverse-primary": "#c8c5cb",
+            "on-error-container": "#93000a",
+            "surface-container-high": "#e7e8ed",
+            "surface-bright": "#f8f9fe"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "margin-mobile": "1rem",
+            "gutter": "1.25rem",
+            "gutter-mobile": "0.75rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem",
+            "space-xl": "2rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Plus Jakarta Sans"],
+            "numeric-hero-mobile": ["JetBrains Mono"],
+            "numeric-hero": ["JetBrains Mono"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "numeric-md": ["JetBrains Mono"],
+            "numeric-lg": ["JetBrains Mono"],
+            "body-md": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "numeric-sm": ["JetBrains Mono"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "numeric-hero-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "numeric-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "numeric-md": ["15px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "numeric-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "display-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .soft-deck-shadow {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.025);
+    }
+    .pill-shadow-elevated {
+      box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.07), 0 6px 16px -3px rgba(0, 0, 0, 0.03);
+    }
+    .cta-obsidian-shadow {
+      box-shadow: 0 8px 20px -4px rgba(17, 17, 21, 0.22);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen selection:bg-surface-container-highest">
+<!-- TopNavBar (Shared Component JSON Blueprint) -->
+<header class="w-full bg-surface dark:bg-inverse-surface sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-space-lg py-space-md max-w-full">
+<!-- Brand Logo / Product Name -->
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-[20px]" data-icon="polyline">polyline</span>
+</div>
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-on-surface flex items-center gap-2 tracking-tight">
+          Nexus Capital
+        </span>
+</div>
+<!-- Navigation Links Cluster -->
+<nav class="hidden md:flex items-center gap-1.5 p-1 bg-surface-container-low rounded-full">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Trade</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Signals</a>
+<!-- Positions: ACTIVE State -->
+<a class="bg-primary dark:bg-primary-fixed text-on-primary dark:text-on-primary-fixed rounded-full px-4 py-1.5 font-label-md text-label-md transition-all duration-150" href="#">Positions</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Calendar</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full transition-colors duration-150" href="#">Vault</a>
+</nav>
+<!-- Trailing Action Cluster -->
+<div class="flex items-center gap-3">
+<!-- MT5 Status Chip -->
+<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">MT5 Connected</span>
+</div>
+<!-- Trailing Account Equity -->
+<div class="hidden lg:flex flex-col items-end px-3 py-1 bg-surface-container-low rounded-full">
+<span class="font-label-sm text-[10px] text-on-surface-variant">Equity</span>
+<span class="font-numeric-md text-numeric-md font-bold text-on-surface">$84,250.00</span>
+</div>
+<!-- Notification Bell -->
+<button class="w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]" data-icon="notifications">notifications</span>
+</button>
+<!-- User Profile Avatar -->
+<div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A refined close-up portrait of an institutional financial analyst in a modern, bright executive office. The image has a calm high-key aesthetic with soft daylight illumination, pure white accents, and subtle cool neutral tones that match a sophisticated quantitative trading aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7AVskAi3GAZfw6tBuVMEIGaSah0mcVw8SMjKzvocZXgMYrI93uU6ua0eBlR32-ErWN6C_KM6Q3F3ajanIGqkm-BkiUTyajDnjq5MDaomA6pQG8E3uWsoV19UexqcrlsBhMY8mLSm_8aNtKa7p2KmDydHaYuW1odzF_5NZSC2H-Et77InYHbzefZLm5G_RPzh5Y769aI0YRRB_denUVDTCHFw5XqylBXqIJErM8q2sR0ki-umykY666w"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Viewport -->
+<main class="max-w-[1440px] mx-auto px-4 md:px-space-lg lg:px-margin py-space-lg space-y-6">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Portfolio &amp; Positions</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time institutional exposure and trade lifecycle execution</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-lowest soft-deck-shadow font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+          Export Audit
+        </button>
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-on-primary cta-obsidian-shadow font-label-md text-label-md hover:bg-primary-container transition-all duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+          New Order
+        </button>
+</div>
+</div>
+<!-- 4 Sleek Stat Chips Row -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Stat 1: Total Equity -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 soft-deck-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Equity</span>
+<span class="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center gap-0.5">
+            +2.4%
+          </span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-numeric-lg text-numeric-lg text-on-surface">$84,250.00</span>
+<span class="font-numeric-sm text-numeric-sm text-on-surface-variant">USD</span>
+</div>
+</div>
+<!-- Stat 2: Free Margin -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 soft-deck-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Free Margin</span>
+<span class="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+            73.8% avail
+          </span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-numeric-lg text-numeric-lg text-on-surface">$62,180.50</span>
+<span class="font-numeric-sm text-numeric-sm text-on-surface-variant">Used $22,069.50</span>
+</div>
+</div>
+<!-- Stat 3: Win Rate -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 soft-deck-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Win Rate</span>
+<span class="font-label-sm text-label-sm font-semibold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant">
+            37W - 14L
+          </span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-numeric-lg text-numeric-lg text-on-surface">72.4%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Institutional Target</span>
+</div>
+</div>
+<!-- Stat 4: Total Trades -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 soft-deck-shadow flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Execution Flow</span>
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-numeric-lg text-numeric-lg text-on-surface">51 Closed</span>
+<span class="font-numeric-sm text-numeric-sm text-on-surface-variant">/ 4 Active</span>
+</div>
+</div>
+</section>
+<!-- Table Switch & Quick Filter Bar -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+<!-- Toggle Pill Container -->
+<div class="inline-flex p-1 rounded-full bg-surface-container-low soft-deck-shadow">
+<button class="px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 bg-primary text-on-primary" id="tab-open" onclick="switchTableTab('open')">
+          Open Positions (4)
+        </button>
+<button class="px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface" id="tab-closed" onclick="switchTableTab('closed')">
+          Closed Trades (51)
+        </button>
+</div>
+<!-- Filter / Search Pill -->
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<div class="relative flex-1 sm:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest border-0 rounded-full pl-9 pr-4 py-2 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-surface-container-highest soft-deck-shadow" placeholder="Filter by asset or ticker..." type="text"/>
+</div>
+<button class="px-3.5 py-2 rounded-full bg-surface-container-lowest soft-deck-shadow flex items-center gap-1.5 text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px]" data-icon="tune">tune</span>
+<span class="hidden md:inline">Parameters</span>
+</button>
+</div>
+</div>
+<!-- Main Table Deck Container (Solid pure white, rounded-3xl, soft ambient shadow, no borders) -->
+<div class="bg-surface-container-lowest rounded-3xl p-4 md:p-6 lg:p-8 soft-deck-shadow overflow-hidden">
+<!-- Open Positions Table View -->
+<div class="overflow-x-auto transition-opacity duration-200" id="table-open-container">
+<table class="w-full text-left border-collapse min-w-[960px]">
+<thead>
+<tr class="border-b border-surface-container-high/70 text-outline font-label-sm text-label-sm">
+<th class="py-3 px-3 font-semibold">Asset</th>
+<th class="py-3 px-3 font-semibold">Side</th>
+<th class="py-3 px-3 font-semibold">Leverage</th>
+<th class="py-3 px-3 font-semibold">Lots</th>
+<th class="py-3 px-3 font-semibold">Entry Price</th>
+<th class="py-3 px-3 font-semibold">Live Price</th>
+<th class="py-3 px-3 font-semibold">Stop Loss</th>
+<th class="py-3 px-3 font-semibold">Take Profit</th>
+<th class="py-3 px-3 font-semibold text-right">Live PnL</th>
+<th class="py-3 px-3 font-semibold text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40 font-body-md text-body-md">
+<!-- Row 1: XAU/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">
+                    Au
+                  </div>
+<div>
+<div class="font-semibold text-on-surface">XAU/USD</div>
+<div class="font-body-sm text-[11px] text-outline">Gold Spot</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">25x</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface">1.25</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">2,674.20</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-semibold">2,684.40</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">2,660.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">2,710.00</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$1,275.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+12.75%</div>
+</td>
+<td class="py-4 px-3 text-center">
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container font-label-sm text-label-sm transition-all duration-150 active:scale-[0.98]">
+                  Close
+                </button>
+</td>
+</tr>
+<!-- Row 2: BTC/USDT -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">
+                    ₿
+                  </div>
+<div>
+<div class="font-semibold text-on-surface">BTC/USDT</div>
+<div class="font-body-sm text-[11px] text-outline">Perpetual Contract</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container">SELL</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">50x</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface">0.40</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">98,200.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-semibold">97,640.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">98,800.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">95,500.00</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$1,120.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+14.25%</div>
+</td>
+<td class="py-4 px-3 text-center">
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container font-label-sm text-label-sm transition-all duration-150 active:scale-[0.98]">
+                  Close
+                </button>
+</td>
+</tr>
+<!-- Row 3: EUR/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">
+                    €
+                  </div>
+<div>
+<div class="font-semibold text-on-surface">EUR/USD</div>
+<div class="font-body-sm text-[11px] text-outline">Forex Spot</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">30x</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface">2.50</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">1.0865</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-semibold">1.0842</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">1.0815</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">1.0920</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-error">-$575.00</div>
+<div class="font-numeric-sm text-numeric-sm text-error">-5.30%</div>
+</td>
+<td class="py-4 px-3 text-center">
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container font-label-sm text-label-sm transition-all duration-150 active:scale-[0.98]">
+                  Close
+                </button>
+</td>
+</tr>
+<!-- Row 4: SOL/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">
+                    S
+                  </div>
+<div>
+<div class="font-semibold text-on-surface">SOL/USD</div>
+<div class="font-body-sm text-[11px] text-outline">Spot Liquidity</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">20x</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface">15.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface-variant">174.50</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-semibold">178.90</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">171.00</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-outline">188.00</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$660.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+7.56%</div>
+</td>
+<td class="py-4 px-3 text-center">
+<button class="px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container font-label-sm text-label-sm transition-all duration-150 active:scale-[0.98]">
+                  Close
+                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Closed Trades Table View (Hidden initially) -->
+<div class="hidden overflow-x-auto transition-opacity duration-200" id="table-closed-container">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="border-b border-surface-container-high/70 text-outline font-label-sm text-label-sm">
+<th class="py-3 px-3 font-semibold">Asset</th>
+<th class="py-3 px-3 font-semibold">Side</th>
+<th class="py-3 px-3 font-semibold">Close Price</th>
+<th class="py-3 px-3 font-semibold">Closing Trigger</th>
+<th class="py-3 px-3 font-semibold text-right">Realized PnL</th>
+<th class="py-3 px-3 font-semibold text-right">Closed Date/Time</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40 font-body-md text-body-md">
+<!-- Row 1: XAU/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">Au</div>
+<div class="font-semibold text-on-surface">XAU/USD</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-medium">2,680.00</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Take Profit
+                </span>
+</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$2,450.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+24.50%</div>
+</td>
+<td class="py-4 px-3 text-right font-numeric-sm text-numeric-sm text-on-surface-variant">Today 14:12</td>
+</tr>
+<!-- Row 2: NVDA -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">N</div>
+<div class="font-semibold text-on-surface">NVDA</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-medium">142.80</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Take Profit
+                </span>
+</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$890.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+12.20%</div>
+</td>
+<td class="py-4 px-3 text-right font-numeric-sm text-numeric-sm text-on-surface-variant">Yesterday 19:45</td>
+</tr>
+<!-- Row 3: ETH/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">Ξ</div>
+<div class="font-semibold text-on-surface">ETH/USD</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container">SELL</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-medium">2,695.50</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  Stop Loss
+                </span>
+</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-error">-$420.00</div>
+<div class="font-numeric-sm text-numeric-sm text-error">-4.20%</div>
+</td>
+<td class="py-4 px-3 text-right font-numeric-sm text-numeric-sm text-on-surface-variant">12 Oct 11:30</td>
+</tr>
+<!-- Row 4: GBP/USD -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">£</div>
+<div class="font-semibold text-on-surface">GBP/USD</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-medium">1.3090</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                  Manual
+                </span>
+</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$310.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+3.10%</div>
+</td>
+<td class="py-4 px-3 text-right font-numeric-sm text-numeric-sm text-on-surface-variant">11 Oct 16:15</td>
+</tr>
+<!-- Row 5: BTC/USDT -->
+<tr class="hover:bg-surface-container-low/40 transition-colors duration-150">
+<td class="py-4 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface">₿</div>
+<div class="font-semibold text-on-surface">BTC/USDT</div>
+</div>
+</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">BUY</span>
+</td>
+<td class="py-4 px-3 font-numeric-md text-numeric-md text-on-surface font-medium">96,400.00</td>
+<td class="py-4 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Take Profit
+                </span>
+</td>
+<td class="py-4 px-3 text-right">
+<div class="font-numeric-md text-numeric-md font-bold text-secondary">+$3,850.00</div>
+<div class="font-numeric-sm text-numeric-sm text-secondary">+38.50%</div>
+</td>
+<td class="py-4 px-3 text-right font-numeric-sm text-numeric-sm text-on-surface-variant">10 Oct 09:20</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Sub-summary footer -->
+<div class="mt-6 pt-4 border-t border-surface-container-high/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-outline font-label-sm text-label-sm">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Zero slippage liquidity route verified • ECN Bridge Active</span>
+</div>
+<div class="flex items-center gap-4">
+<span>Net Unrealized Yield: <strong class="font-numeric-md text-numeric-md text-secondary">+$2,480.00</strong></span>
+<span class="text-surface-variant">|</span>
+<span>Margin Utilization: <strong class="font-numeric-md text-numeric-md text-on-surface">26.2%</strong></span>
+</div>
+</div>
+</div>
+</main>
+<script>
+    function switchTableTab(tab) {
+      const openBtn = document.getElementById('tab-open');
+      const closedBtn = document.getElementById('tab-closed');
+      const openContainer = document.getElementById('table-open-container');
+      const closedContainer = document.getElementById('table-closed-container');
+
+      if (tab === 'open') {
+        openBtn.className = 'px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 bg-primary text-on-primary';
+        closedBtn.className = 'px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface';
+        
+        openContainer.classList.remove('hidden');
+        closedContainer.classList.add('hidden');
+      } else {
+        closedBtn.className = 'px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 bg-primary text-on-primary';
+        openBtn.className = 'px-5 py-2 rounded-full font-label-md text-label-md transition-all duration-200 text-on-surface-variant hover:text-on-surface';
+
+        closedContainer.classList.remove('hidden');
+        openContainer.classList.add('hidden');
+      }
+    }
+  </script>
+</body></html>

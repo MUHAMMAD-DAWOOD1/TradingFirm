@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manage Channels — Nexus Capital</title>
+<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#ffffff",
+            "tertiary": "#000000",
+            "on-primary-fixed-variant": "#47464b",
+            "on-surface-variant": "#47464b",
+            "secondary-fixed-dim": "#44e184",
+            "tertiary-container": "#281900",
+            "error": "#ba1a1a",
+            "secondary": "#006d38",
+            "surface-variant": "#e1e2e7",
+            "primary-fixed": "#e4e1e7",
+            "secondary-container": "#66fe9d",
+            "inverse-primary": "#c8c5cb",
+            "on-secondary-container": "#00743c",
+            "surface-container-high": "#e7e8ed",
+            "on-primary-fixed": "#1b1b1f",
+            "on-tertiary-container": "#af7a05",
+            "surface-container-highest": "#e1e2e7",
+            "surface-tint": "#5f5e63",
+            "primary-container": "#1b1b1f",
+            "primary": "#000000",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "outline": "#78767b",
+            "on-tertiary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f2f3f8",
+            "on-surface": "#191c1f",
+            "tertiary-fixed": "#ffdead",
+            "on-secondary-fixed": "#00210d",
+            "on-background": "#191c1f",
+            "background": "#f8f9fe",
+            "on-tertiary-fixed-variant": "#604100",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#281900",
+            "secondary-fixed": "#66fe9d",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#f8f9fe",
+            "inverse-surface": "#2e3134",
+            "surface-dim": "#d9dadf",
+            "surface-container": "#edeef3",
+            "tertiary-fixed-dim": "#fabc4d",
+            "on-primary-container": "#858388",
+            "surface": "#f8f9fe",
+            "inverse-on-surface": "#eff0f5",
+            "outline-variant": "#c8c5cb",
+            "on-secondary-fixed-variant": "#005229",
+            "primary-fixed-dim": "#c8c5cb"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "3xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "space-xl": "2rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "margin": "2rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "gutter": "1.25rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "numeric-hero": ["JetBrains Mono"],
+            "numeric-lg": ["JetBrains Mono"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "numeric-sm": ["JetBrains Mono"],
+            "numeric-md": ["JetBrains Mono"],
+            "body-md": ["Plus Jakarta Sans"],
+            "numeric-hero-mobile": ["JetBrains Mono"],
+            "display-lg-mobile": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["13px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "numeric-hero": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "numeric-lg": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "numeric-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "numeric-md": ["15px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "numeric-hero-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "display-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .modal-elevation {
+      box-shadow: 0 24px 60px -12px rgba(17, 17, 21, 0.14), 0 10px 24px -6px rgba(17, 17, 21, 0.08);
+    }
+    .card-elevation {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.025);
+    }
+    .cta-shadow {
+      box-shadow: 0 8px 20px -4px rgba(17, 17, 21, 0.22);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased min-h-screen relative overflow-hidden select-none">
+<!-- ========================================================================= -->
+<!-- BACKDROP SCREEN: Signals Dashboard (Dimmed & Softly Blurred)              -->
+<!-- ========================================================================= -->
+<div aria-hidden="true" class="filter blur-md opacity-45 pointer-events-none h-screen flex flex-col justify-between">
+<!-- TopNavBar Shared Component Anchor -->
+<header class="bg-surface dark:bg-inverse-surface flex justify-between items-center w-full px-space-lg py-space-md max-w-full">
+<div class="flex items-center gap-6">
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-on-surface flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-base">token</span>
+</div>
+          Nexus Capital
+        </div>
+<!-- Navigation Links: "Signals" is actively focused -->
+<nav class="hidden md:flex items-center gap-1 bg-surface-container-high/60 p-1 rounded-full">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full" href="#">Trade</a>
+<a class="bg-primary dark:bg-primary-fixed text-on-primary dark:text-on-primary-fixed rounded-full px-4 py-1.5 font-label-md text-label-md" href="#">Signals</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full" href="#">Positions</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full" href="#">Calendar</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface dark:hover:text-inverse-on-surface px-4 py-1.5 font-label-md text-label-md rounded-full" href="#">Vault</a>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+          MT5 Connected
+        </span>
+<span class="font-numeric-md text-numeric-md px-3 py-1 rounded-full bg-surface-container font-semibold">
+          $84,250.00
+        </span>
+<button class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="Institutional quantitative portfolio manager profile avatar portrait with subtle studio lighting, minimal aesthetic on clean light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCPwPztyTZ4M7IFPHuxImTygbPtMPnI18hW40JsBM40TYyEuNKUjslRBjJGUIa6OrLYd6k4gCuzb2X3FrnoEeyuuy0UMx0EVuT9FlAiI0OkuKCNC_pQb31LAkbWfO25nAFtiFvBY1JAjWYXeZ8IQQKnf-6TpYcKQuNkeOuvl4_KPs7-wXqSY7P219Dai4mdmn8DxWnnlT1XoQe2ZgGXN48lzRucQYpz3p_TmJNSNWlzzQEYLphRpuVmw"/>
+</div>
+</div>
+</header>
+<!-- Mock Signals Screen Content (blurred background) -->
+<main class="p-8 max-w-7xl mx-auto w-full flex-1 grid grid-cols-12 gap-6">
+<div class="col-span-8 space-y-4">
+<div class="bg-surface-container-lowest p-6 rounded-2xl card-elevation">
+<div class="h-6 w-48 bg-surface-container-high rounded mb-4"></div>
+<div class="h-40 bg-surface-container-low rounded-xl"></div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-5 rounded-2xl card-elevation h-32"></div>
+<div class="bg-surface-container-lowest p-5 rounded-2xl card-elevation h-32"></div>
+</div>
+</div>
+<div class="col-span-4 space-y-4">
+<div class="bg-surface-container-lowest p-6 rounded-2xl card-elevation h-80"></div>
+</div>
+</main>
+</div>
+<!-- ========================================================================= -->
+<!-- MODAL OVERLAY & CONTAINER                                                 -->
+<!-- ========================================================================= -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-primary/25 backdrop-blur-sm transition-opacity duration-200">
+<!-- Modal Dialog Card (Pure White #FFFFFF, rounded-3xl, soft ambient shadow) -->
+<div aria-labelledby="manage-channels-title" aria-modal="true" class="bg-surface-container-lowest w-full max-w-[540px] rounded-3xl p-6 sm:p-space-lg modal-elevation relative transition-all duration-200" role="dialog">
+<!-- Header: Title, Subtitle, Close Button -->
+<div class="flex items-start justify-between gap-4 mb-6">
+<div>
+<h2 class="text-headline-md font-headline-md font-bold text-on-surface" id="manage-channels-title">
+            Manage Channels
+          </h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+            Configure active ingestion sources and monitor historic signal performance
+          </p>
+</div>
+<button aria-label="Close dialog" class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low active:scale-[0.98] transition-all flex-shrink-0" onclick="closeModal()" type="button">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Content Section 1: Ingestion Channels List -->
+<div class="space-y-2 mb-6">
+<!-- Row 1: VIP Sniper Signals (Telegram) -->
+<div class="flex items-center justify-between p-3.5 rounded-2xl bg-surface-container-low hover:bg-surface-container/70 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary card-elevation">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold">VIP Sniper Signals</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container text-on-surface-variant">Telegram</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+                47W - 13L <span class="text-outline-variant">•</span> 60 Total
+              </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="font-numeric-md text-numeric-md font-bold text-secondary">78.4%</span>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Win Rate</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 active:scale-[0.98] transition-all" title="Remove channel" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 2: Crypto Whale Leaks (WhatsApp) -->
+<div class="flex items-center justify-between p-3.5 rounded-2xl bg-surface-container-low hover:bg-surface-container/70 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary card-elevation">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Crypto Whale Leaks</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container text-on-surface-variant">WhatsApp</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+                12W - 23L <span class="text-outline-variant">•</span> 35 Total
+              </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="font-numeric-md text-numeric-md font-bold text-error">34.2%</span>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Win Rate</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 active:scale-[0.98] transition-all" title="Remove channel" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 3: Macro Pulse FX (Discord) -->
+<div class="flex items-center justify-between p-3.5 rounded-2xl bg-surface-container-low hover:bg-surface-container/70 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary card-elevation">
+<span class="material-symbols-outlined" data-icon="podcasts">podcasts</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Macro Pulse FX</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container text-on-surface-variant">Discord</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+                31W - 14L <span class="text-outline-variant">•</span> 45 Total
+              </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="font-numeric-md text-numeric-md font-bold text-secondary">68.9%</span>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Win Rate</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 active:scale-[0.98] transition-all" title="Remove channel" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Row 4: @InstitutionalQuant (X / Twitter) -->
+<div class="flex items-center justify-between p-3.5 rounded-2xl bg-surface-container-low hover:bg-surface-container/70 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary card-elevation">
+<span class="material-symbols-outlined" data-icon="tag">tag</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold">@InstitutionalQuant</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container text-on-surface-variant">X Feed</span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+                22W - 5L <span class="text-outline-variant">•</span> 27 Total
+              </div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="font-numeric-md text-numeric-md font-bold text-secondary">81.5%</span>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Win Rate</div>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/40 active:scale-[0.98] transition-all" title="Remove channel" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Content Section 2: Add Channel Area -->
+<div class="mb-5">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-2" for="channel-input">
+          Connect New Feed
+        </label>
+<div class="flex flex-col sm:flex-row items-center gap-2">
+<div class="relative w-full">
+<span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-outline flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-lg" data-icon="link">link</span>
+</span>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-low rounded-full text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary/20 border-0 transition-all" id="channel-input" placeholder="Paste Telegram invite link, Discord webhook, or @handle..." type="text"/>
+</div>
+<button class="w-full sm:w-auto flex-shrink-0 px-6 py-3 bg-primary text-on-primary rounded-full font-label-md text-label-md active:scale-[0.98] transition-all cta-shadow flex items-center justify-center gap-1.5" type="button">
+<span>Add Channel</span>
+</button>
+</div>
+</div>
+<!-- Content Section 3: Webhook Endpoints Collapsible -->
+<div class="rounded-2xl bg-surface-container-low/60 p-3.5">
+<button aria-expanded="true" class="w-full flex items-center justify-between text-left group" id="accordion-trigger" onclick="toggleAccordion()" type="button">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Webhook Endpoints</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">(2 Active)</span>
+</div>
+<span class="material-symbols-outlined text-outline transition-transform duration-200 group-hover:text-on-surface" data-icon="expand_more" id="accordion-chevron">
+            expand_more
+          </span>
+</button>
+<!-- Collapsible Content -->
+<div class="mt-3 space-y-2.5 transition-all duration-200 block" id="accordion-content">
+<!-- Endpoint 1 -->
+<div class="p-2.5 rounded-xl bg-surface-container-lowest flex items-center justify-between gap-2">
+<div class="min-w-0 flex-1">
+<div class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-0.5">TradingView Webhook</div>
+<div class="font-numeric-sm text-numeric-sm text-on-surface truncate">https://api.nexuscapital.ai/v1/webhook/tv-signals-9824</div>
+</div>
+<button class="px-3 py-1.5 bg-surface-container-high hover:bg-surface-variant text-on-surface rounded-full font-label-sm text-label-sm active:scale-[0.98] transition-colors flex-shrink-0 flex items-center gap-1" onclick="copyToClipboard('https://api.nexuscapital.ai/v1/webhook/tv-signals-9824', this)" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+<!-- Endpoint 2 -->
+<div class="p-2.5 rounded-xl bg-surface-container-lowest flex items-center justify-between gap-2">
+<div class="min-w-0 flex-1">
+<div class="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider mb-0.5">Telegram Bot Ingestion</div>
+<div class="font-numeric-sm text-numeric-sm text-on-surface truncate">https://api.nexuscapital.ai/v1/webhook/tg-bot-relayer-4110</div>
+</div>
+<button class="px-3 py-1.5 bg-surface-container-high hover:bg-surface-variant text-on-surface rounded-full font-label-sm text-label-sm active:scale-[0.98] transition-colors flex-shrink-0 flex items-center gap-1" onclick="copyToClipboard('https://api.nexuscapital.ai/v1/webhook/tg-bot-relayer-4110', this)" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Logic for Accordion, Copy, and Dismissal -->
+<script>
+    function toggleAccordion() {
+      const content = document.getElementById('accordion-content');
+      const chevron = document.getElementById('accordion-chevron');
+      const trigger = document.getElementById('accordion-trigger');
+      
+      const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
+      if (isExpanded) {
+        content.classList.add('hidden');
+        content.classList.remove('block');
+        chevron.classList.add('-rotate-90');
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        content.classList.remove('hidden');
+        content.classList.add('block');
+        chevron.classList.remove('-rotate-90');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function copyToClipboard(text, btnElement) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = btnElement.innerHTML;
+        btnElement.innerHTML = '<span class="material-symbols-outlined text-sm text-secondary">check</span><span class="text-secondary">Copied</span>';
+        setTimeout(() => {
+          btnElement.innerHTML = originalHTML;
+        }, 1800);
+      });
+    }
+
+    function closeModal() {
+      const backdrop = document.querySelector('[role="dialog"]').parentElement;
+      backdrop.style.opacity = '0';
+      setTimeout(() => {
+        backdrop.style.display = 'none';
+      }, 200);
+    }
+  </script>
+</body></html>
