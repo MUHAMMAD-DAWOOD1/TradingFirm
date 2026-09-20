@@ -5,10 +5,14 @@
 *.pem
 *.key
 
-# Databases
+# Databases & Local State (Strict Machine Isolation)
 *.db
+*.db*
 *.sqlite
-*.sqlite3
+*.sqlite*
+*.db-wal
+*.db-shm
+backend/cache/
 
 
 # Python
@@ -61,3 +65,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Temp / Scratch
+scratch/

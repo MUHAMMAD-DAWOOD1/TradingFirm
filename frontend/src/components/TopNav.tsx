@@ -1,4 +1,5 @@
 import React from "react";
+import { DemoAccount } from "./DemoAccountManagerModal";
 
 interface TopNavProps {
   activeTab: string;
@@ -7,6 +8,8 @@ interface TopNavProps {
   toggleTheme: () => void;
   accountEquity?: number;
   mt5Connected?: boolean;
+  activeAccount?: DemoAccount | null;
+  onOpenAccountManager?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -16,6 +19,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   toggleTheme,
   accountEquity = 84250.00,
   mt5Connected = true,
+  activeAccount,
+  onOpenAccountManager,
 }) => {
   const navItems = [
     { id: "trade", label: "Trade" },
@@ -81,15 +86,33 @@ export const TopNav: React.FC<TopNavProps> = ({
             </span>
           </div>
 
-          {/* Account Balance Chip */}
-          <div className="flex items-center gap-1.5 bg-well border border-border-subtle px-3.5 py-1.5 rounded-full">
-            <span className="material-symbols-outlined text-amber-400 text-[18px]">
-              account_balance_wallet
+          {/* Interactive Demo Account Switcher Chip */}
+          <button
+            type="button"
+            onClick={onOpenAccountManager}
+            title="Manage and switch demo trading accounts"
+            className="flex items-center gap-2 bg-well hover:bg-well-hover border border-border-subtle hover:border-amber-400/50 px-3.5 py-1.5 rounded-full transition-all cursor-pointer group active:scale-95 shadow-sm"
+          >
+            <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[15px]">
+                account_balance_wallet
+              </span>
+            </div>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono text-muted uppercase font-bold tracking-tight">
+                  {activeAccount ? activeAccount.name : "DEMO ACCOUNT"}
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <span className="font-mono text-[12px] font-extrabold text-main tabular-nums leading-none">
+                ${(activeAccount ? activeAccount.equity : accountEquity).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+            <span className="material-symbols-outlined text-muted text-[16px] group-hover:text-amber-400 transition-colors ml-0.5">
+              expand_more
             </span>
-            <span className="font-mono text-[13px] font-bold text-main tabular-nums">
-              ${accountEquity.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
+          </button>
 
           {/* Theme Toggle Button (Light / Dark OLED) */}
           <button

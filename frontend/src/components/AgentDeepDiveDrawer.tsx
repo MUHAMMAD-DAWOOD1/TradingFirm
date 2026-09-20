@@ -21,17 +21,13 @@ export const AgentDeepDiveDrawer: React.FC<AgentDeepDiveDrawerProps> = ({
 
   const [llmData, setLlmData] = useState<any>(null);
   const [llmLoading, setLlmLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("nexus_gemini_api_key") || "");
 
   const fetchLLMReasoning = () => {
     setLlmLoading(true);
     fetch("/api/agents/deep-reasoning", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        symbol: asset,
-        api_key: apiKey || undefined,
-      }),
+      body: JSON.stringify({ symbol: asset }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -41,11 +37,6 @@ export const AgentDeepDiveDrawer: React.FC<AgentDeepDiveDrawerProps> = ({
         }
       })
       .catch(() => setLlmLoading(false));
-  };
-
-  const handleSaveKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem("nexus_gemini_api_key", key);
   };
 
   // Auto trigger reasoning when drawer opens
@@ -491,45 +482,38 @@ export const AgentDeepDiveDrawer: React.FC<AgentDeepDiveDrawerProps> = ({
           {/* TAB 7: LIVE LLM DEEP REASONING (GEMINI 2.5 FLASH) */}
           {activeTab === "llm" && (
             <div className="space-y-4">
-              {/* API Key Configuration Card */}
-              <div className="p-3.5 rounded-2xl bg-well border border-border-subtle space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[15px] text-amber-500">key</span>
-                    Gemini API Key (Optional)
-                  </span>
-                  <span className="text-[10px] text-muted font-mono">
-                    {apiKey ? "API Key Configured" : "Offline Heuristic Mode Active"}
-                  </span>
+              {/* Backend 4-Key Pool Status Header */}
+              <div className="p-3.5 rounded-2xl bg-well border border-border-subtle flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+                    <span className="material-symbols-outlined text-[18px]">psychology</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-extrabold text-main">
+                        Gemini Multi-Key Pool
+                      </span>
+                      <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        {llmData?.key_label || "Project 2 (8-Agent Swarm)"}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted font-mono block mt-0.5">
+                      Model: {llmData?.model || "gemini-3.6-flash"} &bull; {llmData?.formatted_time ? `Last run: ${llmData.formatted_time}` : "Backend Connected"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    placeholder="Paste Gemini API key (or leave empty for offline model)..."
-                    value={apiKey}
-                    onChange={(e) => handleSaveKey(e.target.value)}
-                    className="flex-1 text-xs px-3 py-1.5 rounded-xl bg-well-subtle border border-border-subtle text-main outline-none font-mono"
-                  />
-                  <button
-                    onClick={fetchLLMReasoning}
-                    disabled={llmLoading}
-                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-1"
-                  >
-                    {llmLoading ? "Analyzing..." : "Re-Analyze"}
-                  </button>
-                </div>
-              </div>
 
-              {/* Engine Status Tag */}
-              {llmData && (
-                <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-well-subtle border border-border-subtle text-[11px]">
-                  <span className="text-muted">Inference Engine:</span>
-                  <span className="font-mono font-bold text-main flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${llmData.mode === "LIVE_GEMINI_LLM" ? "bg-emerald-500 animate-pulse" : "bg-blue-500"}`} />
-                    {llmData.model || "Nexus Quant Synthesis"}
+                <button
+                  onClick={fetchLLMReasoning}
+                  disabled={llmLoading}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer"
+                >
+                  <span className={`material-symbols-outlined text-[15px] ${llmLoading ? "animate-spin" : ""}`}>
+                    {llmLoading ? "sync" : "refresh"}
                   </span>
-                </div>
-              )}
+                  <span>{llmLoading ? "Analyzing..." : "Re-Analyze"}</span>
+                </button>
+              </div>
 
               {llmData && (
                 <>

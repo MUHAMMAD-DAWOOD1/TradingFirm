@@ -114,6 +114,10 @@ class GeminiKeyPool:
                     break
 
             tried_keys.append(slot.key)
+            target_model = model
+            model_success = False
+            last_err = ""
+
             try:
                 client = genai.Client(api_key=slot.key)
                 full_contents = prompt
@@ -121,7 +125,7 @@ class GeminiKeyPool:
                     full_contents = f"{system_instruction}\n\n{prompt}"
 
                 response = client.models.generate_content(
-                    model=model,
+                    model=target_model,
                     contents=full_contents
                 )
 
@@ -129,7 +133,7 @@ class GeminiKeyPool:
                 return {
                     "success": True,
                     "text": response.text.strip(),
-                    "model_used": model,
+                    "model_used": target_model,
                     "key_role": slot.role,
                     "key_label": slot.label,
                     "attempt": attempt + 1
@@ -138,7 +142,6 @@ class GeminiKeyPool:
             except Exception as e:
                 err_msg = str(e)
                 logger.warning(f"Gemini Key [{slot.label}] failed on attempt {attempt+1}: {err_msg}")
-                # If rate limit or quota reached, mark in cooldown
                 if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "quota" in err_msg.lower():
                     slot.mark_rate_limited(duration_sec=60.0)
                 else:

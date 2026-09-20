@@ -58,6 +58,9 @@ interface TradeExecutionModalProps {
   defaultEntry?: string;
   defaultSL?: string;
   defaultTP?: string;
+  defaultTP1?: string;
+  defaultTP2?: string;
+  defaultSide?: 'BUY' | 'SELL';
   defaultQuantity?: number;
   defaultCapital?: number;
 }
@@ -70,11 +73,14 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
   defaultEntry = '77200',
   defaultSL = '75500',
   defaultTP = '81000',
+  defaultTP1,
+  defaultTP2,
+  defaultSide = 'BUY',
   defaultQuantity,
   defaultCapital = 10000,
 }) => {
   const [execState, setExecState] = useState<ExecutionState | null>(null);
-  const [side, setSide] = useState<'BUY' | 'SELL'>('BUY');
+  const [side, setSide] = useState<'BUY' | 'SELL'>(defaultSide);
   const [orderType, setOrderType] = useState<'MARKET' | 'LIMIT'>('MARKET');
   const [quantity, setQuantity] = useState<number>(
     defaultQuantity || (defaultSymbol.includes('XAU') ? 0.35 : 0.05)
@@ -82,11 +88,15 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
   const [entryPrice, setEntryPrice] = useState<number>(currentPrice || 77200);
   const [stopLoss, setStopLoss] = useState<number>(parseFloat(defaultSL.replace('$', '')) || 75500);
   const [takeProfit, setTakeProfit] = useState<number>(parseFloat(defaultTP.replace('$', '')) || 81000);
+  const [selectedAiTp, setSelectedAiTp] = useState<'TP1' | 'TP2' | 'CUSTOM'>(defaultTP2 ? 'TP2' : 'CUSTOM');
   const [leverage, setLeverage] = useState<number>(5);
   const [customCapital, setCustomCapital] = useState<number>(defaultCapital);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [capitalUpdating, setCapitalUpdating] = useState<boolean>(false);
   const [execMessage, setExecMessage] = useState<string | null>(null);
+
+  const tp1Val = defaultTP1 ? parseFloat(defaultTP1.replace('$', '')) : null;
+  const tp2Val = defaultTP2 ? parseFloat(defaultTP2.replace('$', '')) : (parseFloat(defaultTP.replace('$', '')) || null);
 
   const capitalPresets = [1000, 5000, 10000, 25000, 50000, 100000];
   const lotPresets = defaultSymbol.includes('XAU') 
@@ -157,6 +167,7 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
           stop_loss: Number(stopLoss),
           take_profit: Number(takeProfit),
           leverage: Number(leverage),
+          account_id: (execState?.account as any)?.id,
         }),
       });
 
@@ -184,6 +195,29 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
       }
     } catch (e) {
       console.error('Failed to close position:', e);
+    }
+  };
+
+  const applyCapitalPercentage = (pct: number) => {
+    const available = execState?.account?.available_margin || customCapital;
+    if (available <= 0 || currentPrice <= 0) return;
+    const targetMargin = available * (pct / 100);
+    const targetNotional = targetMargin * Math.max(leverage, 1);
+    let calculatedQty = targetNotional / currentPrice;
+    if (defaultSymbol.includes('XAU') || defaultSymbol.includes('BTC')) {
+      calculatedQty = Math.max(0.01, Math.round(calculatedQty * 100) / 100);
+    } else {
+      calculatedQty = Math.max(0.001, Math.round(calculatedQty * 1000) / 1000);
+    }
+    setQuantity(calculatedQty);
+  };
+
+  const handleSelectAiTp = (type: 'TP1' | 'TP2') => {
+    setSelectedAiTp(type);
+    if (type === 'TP1' && tp1Val) {
+      setTakeProfit(tp1Val);
+    } else if (type === 'TP2' && tp2Val) {
+      setTakeProfit(tp2Val);
     }
   };
 
@@ -366,8 +400,23 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
                 </div>
               </div>
 
+              {/* Quick Equity/Margin Percentage Chips */}
+              <div className="flex items-center gap-1.5 pt-1">
+                <span className="text-[10px] text-slate-500 font-mono">Amount %:</span>
+                {[25, 50, 75, 100].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => applyCapitalPercentage(pct)}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#141b2d] border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all"
+                  >
+                    {pct === 100 ? 'Max (100%)' : `${pct}%`}
+                  </button>
+                ))}
+              </div>
+
               {/* Quick Lot Presets */}
-              <div className="flex flex-wrap items-center gap-1 pt-1">
+              <div className="flex flex-wrap items-center gap-1 pt-0.5">
                 <span className="text-[10px] text-slate-500 font-mono">Presets:</span>
                 {lotPresets.map((lp) => (
                   <button
@@ -444,8 +493,15 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
             {/* SL & TP Targets */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[#121929] border border-red-500/20 p-3 rounded-xl space-y-1">
-                <div className="flex justify-between text-[11px] font-mono text-red-400 font-bold">
-                  <span>Stop Loss ($)</span>
+                <div className="flex items-center justify-between text-[11px] font-mono text-red-400 font-bold">
+                  <div className="flex items-center gap-1.5">
+                    <span>Stop Loss ($)</span>
+                    {defaultSL && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 border border-red-500/40">
+                        AI SL
+                      </span>
+                    )}
+                  </div>
                   <span>-${maxDollarLoss.toFixed(2)} ({maxDollarLossPct.toFixed(1)}%)</span>
                 </div>
                 <input
@@ -458,17 +514,59 @@ export const TradeExecutionModal: React.FC<TradeExecutionModalProps> = ({
               </div>
 
               <div className="bg-[#121929] border border-emerald-500/20 p-3 rounded-xl space-y-1">
-                <div className="flex justify-between text-[11px] font-mono text-emerald-400 font-bold">
-                  <span>Take Profit ($)</span>
+                <div className="flex items-center justify-between text-[11px] font-mono text-emerald-400 font-bold">
+                  <div className="flex items-center gap-1.5">
+                    <span>Take Profit ($)</span>
+                    {(tp1Val || tp2Val) && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        AI TP
+                      </span>
+                    )}
+                  </div>
                   <span>+${projectedGain.toFixed(2)} ({projectedGainPct.toFixed(1)}%)</span>
                 </div>
                 <input
                   type="number"
                   step="0.1"
                   value={takeProfit}
-                  onChange={(e) => setTakeProfit(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    setTakeProfit(parseFloat(e.target.value) || 0);
+                    setSelectedAiTp('CUSTOM');
+                  }}
                   className="w-full bg-[#0b101b] border border-emerald-500/30 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-400"
                 />
+
+                {/* AI Targets Switcher */}
+                {(tp1Val || tp2Val) && (
+                  <div className="flex items-center gap-1 pt-1">
+                    {tp1Val && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectAiTp('TP1')}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold transition-all border ${
+                          selectedAiTp === 'TP1'
+                            ? 'bg-emerald-500/30 border-emerald-500 text-emerald-300'
+                            : 'bg-[#0b101b] border-white/5 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        TP1: ${tp1Val}
+                      </button>
+                    )}
+                    {tp2Val && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectAiTp('TP2')}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold transition-all border ${
+                          selectedAiTp === 'TP2'
+                            ? 'bg-emerald-500/30 border-emerald-500 text-emerald-300'
+                            : 'bg-[#0b101b] border-white/5 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        TP2: ${tp2Val}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

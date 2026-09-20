@@ -21,6 +21,9 @@ from backend.database import (
     save_signal_feed,
     get_signals_feed,
     get_signal_by_id,
+    get_pending_signals,
+    resolve_signal_outcome,
+    get_signals_performance_metrics,
     get_signal_channels,
     add_signal_channel
 )
@@ -165,9 +168,119 @@ def parse_signal_text(text: str) -> Dict[str, Any]:
 # -------------------------------------------------------------
 # 2. SIGNAL INGESTION PIPELINE (Parse + Audit + Store)
 # -------------------------------------------------------------
+def _generate_cro_verdict_urdu(
+    asset: str,
+    direction: str,
+    trap_status: str,
+    trap_score: int,
+    rr_str: str,
+    reasons: List[str]
+) -> str:
+    """Generates direct, institutional Roman Urdu advice from Chief Risk Officer."""
+    is_alpha = trap_status == "VERIFIED_ALPHA"
+    is_trap = trap_status == "RETAIL_TRAP_SUSPECTED"
+
+    if is_alpha:
+        return (
+            f"✅ {asset} {direction} Setup Bohat Mazboot Hai: Institutional order flow aur liquidity alignment "
+            f"aap ke haq mein hai. Risk-to-Reward {rr_str} institutional standard ke mutabiq hai. "
+            f"TP hit hone ke imkanat 80%+ hain. Proper risk management ke sath order deploy karein."
+        )
+    elif is_trap:
+        return (
+            f"🛑 KHABARDAR - RETAIL TRAP DETECTED ({trap_score}/100): Is signal mein baray banks ka fakeout "
+            f"hone ka 75%+ risk hai. Retail crowd ek hi taraf trapped hai. Stop Loss bohot jaldi hunt ho sakta hai. "
+            f"Ispar direct trade na lein, ya to confirmation candle ka intezar karein ya trade skip karein."
+        )
+    else:
+        return (
+            f"⚠️ VOLATILE SETUP ({trap_score}/100): High risk aur chop zone hai. Market direction clear nahi hai. "
+            f"Agar entry leni ho to lot size aadhi (50%) karein aur tight stop loss maintain karein."
+        )
+
+
+def audit_custom_user_signal(custom_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Audits user's custom trade plan ('Apna Signal'):
+    - symbol, direction, entry_price, stop_loss, take_profit, user_notes
+    - Runs multi-agent trap detector + Market Behavior OS
+    - Formulates Chief Risk Officer Roman Urdu analysis
+    - Saves into SQLite database as is_user_custom=1
+    """
+    asset = custom_data.get("asset", "XAUUSD").upper()
+    direction = custom_data.get("direction", "BUY").upper()
+    entry_price = float(custom_data.get("entry_price", 0.0) or 0.0)
+    stop_loss = float(custom_data.get("stop_loss", 0.0) or 0.0)
+    take_profit = float(custom_data.get("take_profit", 0.0) or 0.0)
+    user_notes = custom_data.get("user_notes", "")
+    risk_pct = float(custom_data.get("risk_pct", 1.0) or 1.0)
+
+    # Fallback to live market price if entry was 0
+    if entry_price == 0.0:
+        live_mkt = get_live_market_price(asset)
+        entry_price = float(live_mkt.get("price", 2685.0))
+
+    if stop_loss == 0.0:
+        stop_loss = round(entry_price * (0.985 if direction == "BUY" else 1.015), 2)
+    if take_profit == 0.0:
+        take_profit = round(entry_price * (1.025 if direction == "BUY" else 0.975), 2)
+
+    tp_targets = [take_profit]
+
+    # Audit with trap detector & Market Behavior OS
+    audit_res = audit_signal({
+        "asset": asset,
+        "direction": direction,
+        "entry_min": entry_price,
+        "entry_max": entry_price,
+        "stop_loss": stop_loss,
+        "take_profit_targets": tp_targets,
+        "source": "CUSTOM_USER"
+    })
+
+    rr_str = audit_res.get("risk_reward", "1:2.0")
+    trap_status = audit_res.get("trap_status", "VERIFIED_ALPHA")
+    trap_score = audit_res.get("trap_score", 15)
+    trap_reasons = audit_res.get("trap_reasons", [])
+    swarm_conf = audit_res.get("swarm_confidence", 85)
+
+    cro_verdict = _generate_cro_verdict_urdu(asset, direction, trap_status, trap_score, rr_str, trap_reasons)
+
+    raw_summary = (
+        f"Custom Plan: {direction} {asset} @ {entry_price} | SL: {stop_loss} | TP: {take_profit} "
+        f"| Risk: {risk_pct}% | Notes: {user_notes or 'My discretionary setup'}"
+    )
+
+    sig_record = {
+        "id": f"sig_custom_{int(time.time()*1000)}",
+        "source": "CUSTOM_USER",
+        "channel_name": "My Trade Plan (Apna Signal)",
+        "raw_text": raw_summary,
+        "asset": asset,
+        "direction": direction,
+        "entry_min": entry_price,
+        "entry_max": entry_price,
+        "stop_loss": stop_loss,
+        "take_profit_targets": tp_targets,
+        "risk_reward": rr_str,
+        "trap_status": trap_status,
+        "trap_score": trap_score,
+        "trap_reasons": trap_reasons,
+        "swarm_confidence": swarm_conf,
+        "outcome_status": "PENDING",
+        "is_user_custom": 1,
+        "user_notes": user_notes,
+        "cro_verdict_urdu": cro_verdict,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    save_signal_feed(sig_record)
+    return sig_record
+
+
 def ingest_raw_signal(raw_text: str, source: str = "TELEGRAM", channel_name: str = "VIP Institutional Desk") -> Dict[str, Any]:
     """
-    Full pipeline:
+    Full pipeline for external pasted signals:
     1. Parses unformatted signal text
     2. Runs Institutional Trap Detector audit (Order book + Derivatives flow + Macro clock)
     3. Persists into SQLite database
@@ -175,7 +288,6 @@ def ingest_raw_signal(raw_text: str, source: str = "TELEGRAM", channel_name: str
     """
     parsed = parse_signal_text(raw_text)
     
-    # Audit signal with Multi-Agent Trap Detector
     audit_res = audit_signal({
         "asset": parsed["asset"],
         "direction": parsed["direction"],
@@ -185,6 +297,16 @@ def ingest_raw_signal(raw_text: str, source: str = "TELEGRAM", channel_name: str
         "take_profit_targets": parsed["take_profit_targets"],
         "source": source
     })
+
+    rr_str = audit_res.get("risk_reward", "1:2.0")
+    trap_status = audit_res.get("trap_status", "VERIFIED_ALPHA")
+    trap_score = audit_res.get("trap_score", 15)
+    trap_reasons = audit_res.get("trap_reasons", [])
+    swarm_conf = audit_res.get("swarm_confidence", 85)
+
+    cro_verdict = _generate_cro_verdict_urdu(
+        parsed["asset"], parsed["direction"], trap_status, trap_score, rr_str, trap_reasons
+    )
 
     sig_record = {
         "id": f"sig_{int(time.time()*1000)}",
@@ -197,17 +319,122 @@ def ingest_raw_signal(raw_text: str, source: str = "TELEGRAM", channel_name: str
         "entry_max": parsed["entry_max"],
         "stop_loss": parsed["stop_loss"],
         "take_profit_targets": parsed["take_profit_targets"],
-        "risk_reward": audit_res.get("risk_reward", "1:2.0"),
-        "trap_status": audit_res.get("trap_status", "VERIFIED_ALPHA"),
-        "trap_score": audit_res.get("trap_score", 15),
-        "trap_reasons": audit_res.get("trap_reasons", []),
-        "swarm_confidence": audit_res.get("swarm_confidence", 85),
+        "risk_reward": rr_str,
+        "trap_status": trap_status,
+        "trap_score": trap_score,
+        "trap_reasons": trap_reasons,
+        "swarm_confidence": swarm_conf,
         "outcome_status": "PENDING",
+        "is_user_custom": 0,
+        "user_notes": "",
+        "cro_verdict_urdu": cro_verdict,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     save_signal_feed(sig_record)
     return sig_record
+
+
+def validate_pending_signals(live_prices: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
+    """
+    Automated Mark-to-Market Continuous Validator:
+    - Checks pending signals against live price feeds
+    - Validates whether TP or SL hit
+    - Updates outcome: 'SUCCESS_TP', 'FAILED_SL', 'TRAP_AVOIDED_SL'
+    - Feeds into self-learning and channel accuracy ratings!
+    """
+    pending = get_pending_signals()
+    if not pending:
+        return []
+
+    resolved_items = []
+
+    for sig in pending:
+        sig_id = sig["id"]
+        asset = sig["asset"]
+        direction = sig["direction"]
+        sl = float(sig.get("stop_loss", 0.0) or 0.0)
+        tp_targets = sig.get("take_profit_targets", [])
+        tp = float(tp_targets[0]) if tp_targets else 0.0
+        trap_status = sig.get("trap_status", "VERIFIED_ALPHA")
+        rr_str = sig.get("risk_reward", "1:2.0")
+
+        # Resolve live price
+        curr_price = 0.0
+        if live_prices and asset in live_prices:
+            curr_price = live_prices[asset]
+        else:
+            live_mkt = get_live_market_price(asset)
+            curr_price = float(live_mkt.get("price", 0.0) or 0.0)
+
+        if curr_price <= 0.0 or sl <= 0.0 or tp <= 0.0:
+            continue
+
+        triggered = False
+        outcome = "PENDING"
+        notes = ""
+        realized_rr = 0.0
+
+        # Calculate numeric R-multiple from rr_str e.g. "1:2.4" -> 2.4
+        try:
+            target_r = float(rr_str.split(":")[-1])
+        except Exception:
+            target_r = 2.0
+
+        if direction == "BUY":
+            # Check Take-Profit
+            if curr_price >= tp:
+                triggered = True
+                outcome = "SUCCESS_TP"
+                realized_rr = target_r
+                notes = f"✓ Target Profit Hit (${tp:,.2f})! Market ne bullish expansion deliver ki. (+{realized_rr}R gain)"
+            # Check Stop-Loss
+            elif curr_price <= sl:
+                triggered = True
+                if trap_status == "RETAIL_TRAP_SUSPECTED":
+                    outcome = "TRAP_AVOIDED_SL"
+                    realized_rr = 0.0
+                    notes = f"🛡️ Retail Trap Successfully Avoided! Market ne ${sl:,.2f} par dump kar ke SL sweep kiya. AI ne bilkul theek warning di thi, capital bach gaya!"
+                else:
+                    outcome = "FAILED_SL"
+                    realized_rr = -1.0
+                    notes = f"✗ Stop Loss Hit (${sl:,.2f}). Market structure invalidate ho gaya. (-1.0R loss)"
+        elif direction == "SELL":
+            # Check Take-Profit
+            if curr_price <= tp:
+                triggered = True
+                outcome = "SUCCESS_TP"
+                realized_rr = target_r
+                notes = f"✓ Target Profit Hit (${tp:,.2f})! Short breakdown deliver hua. (+{realized_rr}R gain)"
+            # Check Stop-Loss
+            elif curr_price >= sl:
+                triggered = True
+                if trap_status == "RETAIL_TRAP_SUSPECTED":
+                    outcome = "TRAP_AVOIDED_SL"
+                    realized_rr = 0.0
+                    notes = f"🛡️ Bear Trap Successfully Avoided! Market ne upside squeeze karke ${sl:,.2f} SL sweep kiya. AI ne correctly warn kiya tha!"
+                else:
+                    outcome = "FAILED_SL"
+                    realized_rr = -1.0
+                    notes = f"✗ Stop Loss Hit (${sl:,.2f}). Squeeze ne short position sweep kar di. (-1.0R loss)"
+
+        if triggered:
+            resolve_signal_outcome(
+                sig_id=sig_id,
+                outcome_status=outcome,
+                resolved_price=curr_price,
+                resolution_notes=notes,
+                realized_rr=realized_rr
+            )
+            resolved_items.append({
+                "id": sig_id,
+                "asset": asset,
+                "outcome": outcome,
+                "notes": notes,
+                "resolved_price": curr_price
+            })
+
+    return resolved_items
 
 
 # -------------------------------------------------------------

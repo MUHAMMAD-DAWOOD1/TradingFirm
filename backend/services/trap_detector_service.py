@@ -20,6 +20,9 @@ from datetime import datetime, timezone
 from backend.price_service import get_real_market_price as get_live_market_price
 from backend.services.derivatives_service import get_derivatives_data
 from backend.services.macro_calendar_service import fetch_forexfactory_calendar
+from backend.services.market_behavior_engine import analyze_market_operating_system
+import yfinance as yf
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +154,62 @@ def audit_signal(signal: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"Derivatives flow audit failed: {e}")
 
+    # 6. Market Behavior Operating System (7 Regimes, FVG, SMT, Sweeps, NO-TRADE)
+    market_os_audit = None
+    try:
+        yf_symbol = "GC=F" if "XAU" in asset or "GOLD" in asset else ("BTC-USD" if "BTC" in asset else "EURUSD=X")
+        hist = yf.Ticker(yf_symbol).history(period="5d", interval="1h")
+        if not hist.empty and len(hist) >= 20:
+            silver_hist = None
+            if "XAU" in asset or "GOLD" in asset:
+                try:
+                    silver_hist = yf.Ticker("SI=F").history(period="5d", interval="1h")
+                except Exception:
+                    silver_hist = None
+            
+            market_os = analyze_market_operating_system(
+                gold_df=hist,
+                silver_df=silver_hist,
+                current_price=live_price,
+                news_minutes=None
+            )
+            market_os_audit = market_os
+            
+            if market_os.get("success"):
+                onto = market_os.get("ontology", {})
+                no_trade_gate = onto.get("layer_f_no_trade_gate", {})
+                liq_event = onto.get("layer_c_liquidity_event", {})
+                smt_event = onto.get("layer_e_advanced_edge", {}).get("smt_divergence", {})
+                active_scen = market_os.get("active_scenario", {})
+
+                # Check NO-TRADE Mid-Range violation
+                if no_trade_gate.get("is_no_trade"):
+                    trap_score += 35
+                    trap_reasons.append(f"🛑 Operating System Gate Violation: {no_trade_gate.get('reason')}")
+
+                # Check Counter-Liquidity Sweep Trap
+                if liq_event.get("has_sweep"):
+                    sweep_bias = liq_event.get("bias")
+                    if sweep_bias and sweep_bias != direction:
+                        trap_score += 35
+                        trap_reasons.append(
+                            f"🚨 Liquidity Sweep Reversal Trap: {liq_event.get('type')} active at ${liq_event.get('swept_level')}. "
+                            f"Whales swept stops and are pushing {sweep_bias}. Counter-trend trap detected."
+                        )
+
+                # Check SMT Divergence
+                if smt_event.get("smt_active") and smt_event.get("signal") != direction:
+                    trap_score += 25
+                    trap_reasons.append(f"⚠️ SMT Divergence Trap: {smt_event.get('description')}")
+
+                trap_reasons.append(
+                    f"📊 Market OS Classification: Regime [{onto.get('layer_a_regime', {}).get('parent_name')}] "
+                    f"-> Scenario #{active_scen.get('scenario_number')}: {active_scen.get('scenario_name')}. "
+                    f"Bayesian Quality Score: {market_os.get('quantitative_score')}/100."
+                )
+    except Exception as e:
+        logger.debug(f"Market OS quantitative audit check failed: {e}")
+
     # Clamp trap score
     trap_score = min(100, max(0, trap_score))
 
@@ -158,7 +217,7 @@ def audit_signal(signal: Dict[str, Any]) -> Dict[str, Any]:
     if trap_score >= 60:
         trap_status = "RETAIL_TRAP_SUSPECTED"
         swarm_confidence = max(25, 100 - trap_score)
-        trap_reasons.insert(0, "🔴 HIGH PROBABILITY RETAIL TRAP: Multiple indicators show retail crowding or liquidity hunting.")
+        trap_reasons.insert(0, "🔴 HIGH PROBABILITY RETAIL TRAP: Multiple indicators show retail crowding, liquidity hunting, or mid-range violation.")
     elif trap_score >= 35:
         trap_status = "HIGH_RISK_VOLATILE"
         swarm_confidence = max(50, 95 - trap_score)
@@ -166,7 +225,7 @@ def audit_signal(signal: Dict[str, Any]) -> Dict[str, Any]:
     else:
         trap_status = "VERIFIED_ALPHA"
         swarm_confidence = min(96, 100 - trap_score)
-        trap_reasons.insert(0, "🟢 VERIFIED INSTITUTIONAL ALPHA: Clean liquidity structure, balanced funding, no immediate macro hazard.")
+        trap_reasons.insert(0, "🟢 VERIFIED INSTITUTIONAL ALPHA: Clean liquidity structure, balanced funding, confirmed by Market Behavior OS.")
 
     return {
         "trap_status": trap_status,
@@ -176,5 +235,6 @@ def audit_signal(signal: Dict[str, Any]) -> Dict[str, Any]:
         "live_price_at_audit": live_price,
         "risk_reward": rr_str,
         "macro_warning": macro_warning,
-        "derivatives_warning": derivatives_warning
+        "derivatives_warning": derivatives_warning,
+        "market_os_audit": market_os_audit
     }

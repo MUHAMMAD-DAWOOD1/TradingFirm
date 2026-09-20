@@ -19,6 +19,8 @@ interface TradeScreenProps {
   isDark: boolean;
   onTradeExecuted?: () => void;
   prefilledSignal?: any;
+  activeAccount?: any;
+  onOpenAccountManager?: () => void;
 }
 
 export const TradeScreen: React.FC<TradeScreenProps> = ({
@@ -29,6 +31,8 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
   isDark,
   onTradeExecuted,
   prefilledSignal,
+  activeAccount,
+  onOpenAccountManager,
 }) => {
   // In-place UI states
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
@@ -43,19 +47,115 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
 
   // Custom typed parameters & Demo Capital state
   const [customLot, setCustomLot] = useState<string>("");
+  const [customLeverage, setCustomLeverage] = useState<string>("");
   const [customSlPrice, setCustomSlPrice] = useState<string>("");
   const [customTpPrice, setCustomTpPrice] = useState<string>("");
+  const [selectedAiTp, setSelectedAiTp] = useState<"TP1" | "TP2" | "CUSTOM">("TP2");
+  const [isAiSynced, setIsAiSynced] = useState<boolean>(true);
   const [accountState, setAccountState] = useState<any>(null);
-  const [isCapitalModalOpen, setIsCapitalModalOpen] = useState<boolean>(false);
-  const [inputCapital, setInputCapital] = useState<string>("10000");
-  const [capitalLoading, setCapitalLoading] = useState<boolean>(false);
+
+  // Real-time AI Master Stance state
+  const [aiStanceData, setAiStanceData] = useState<any>(null);
+  const [isAnalyzingStance, setIsAnalyzingStance] = useState<boolean>(false);
+  const [lastStanceTimestamp, setLastStanceTimestamp] = useState<string>("");
+
+  const fetchLiveAIStance = async (symToAnalyze?: string) => {
+    const sym = symToAnalyze || selectedSymbol || "XAUUSD";
+    setIsAnalyzingStance(true);
+    try {
+      const activeLev = customLeverage !== "" ? Math.max(1, Number(customLeverage)) : leverage;
+      const curCap = Number(activeAccount?.balance ?? accountState?.balance ?? 100);
+      const isMetal = sym.includes("XAU") || sym.includes("GOLD");
+      const computedLot = customLot
+        ? Math.max(0.01, parseFloat(customLot))
+        : (curCap <= 500 ? 0.01 : Math.max(0.01, Number(((curCap * 0.5 * activeLev) / ((currentPrice || 2684.4) * (isMetal ? 100 : 1))).toFixed(2))));
+
+      const res = await fetch("/api/agents/deep-reasoning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: sym,
+          account_id: activeAccount?.id || "ACC_DEFAULT",
+          user_capital: curCap,
+          leverage: activeLev,
+          lot_size: computedLot,
+          risk_pct: 2.0,
+        }),
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setAiStanceData(data);
+        const now = new Date();
+        const timeFormatted = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        setLastStanceTimestamp(timeFormatted);
+
+        // 1. Auto-set Direction from AI solution
+        if (data.direction === "BUY" || data.direction === "SELL") {
+          setSide(data.direction);
+        }
+
+        // 2. Auto-set Stop Loss from AI solution
+        if (data.levels?.stop_loss) {
+          setCustomSlPrice(String(Number(data.levels.stop_loss).toFixed(2)));
+        }
+
+        // 3. Auto-set Take Profit from AI solution (Default to TP2 or TP1)
+        const primaryTp = data.levels?.target_2 || data.levels?.target_1;
+        if (primaryTp) {
+          setCustomTpPrice(String(Number(primaryTp).toFixed(2)));
+          setSelectedAiTp(data.levels?.target_2 ? "TP2" : "TP1");
+        }
+        setIsAiSynced(true);
+      }
+    } catch (err) {
+      console.error("Error fetching live AI stance:", err);
+    } finally {
+      setIsAnalyzingStance(false);
+    }
+  };
+
+  const syncToAiLevels = (targetType: "TP1" | "TP2" = "TP2") => {
+    if (!aiStanceData) return;
+    if (aiStanceData.direction === "BUY" || aiStanceData.direction === "SELL") {
+      setSide(aiStanceData.direction);
+    }
+    if (aiStanceData.levels?.stop_loss) {
+      setCustomSlPrice(String(Number(aiStanceData.levels.stop_loss).toFixed(2)));
+    }
+    const targetPrice = targetType === "TP1"
+      ? (aiStanceData.levels?.target_1 || aiStanceData.levels?.target_2)
+      : (aiStanceData.levels?.target_2 || aiStanceData.levels?.target_1);
+
+    if (targetPrice) {
+      setCustomTpPrice(String(Number(targetPrice).toFixed(2)));
+      setSelectedAiTp(targetType);
+    }
+    setIsAiSynced(true);
+    setOrderToast({
+      message: `Order synced to AI Solution (${aiStanceData.direction}): SL $${Number(aiStanceData.levels?.stop_loss).toFixed(2)} | ${targetType} $${Number(targetPrice).toFixed(2)}`,
+      type: "success",
+    });
+  };
+
+  useEffect(() => {
+    fetchLiveAIStance(selectedSymbol);
+  }, [selectedSymbol, activeAccount?.id, activeAccount?.balance, leverage, customLeverage]);
 
   const fetchExecutionState = () => {
-    fetch("/api/execution/state")
+    const url = activeAccount?.id ? `/api/execution/state?account_id=${activeAccount.id}` : "/api/execution/state";
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.account) {
-          setAccountState(d.account);
+        if (d) {
+          if (d.account) {
+            setAccountState(d.account);
+            setAmount((prev) => {
+              if (prev === 5000 && d.account.equity < 5000) {
+                return Math.max(10, Math.round((d.account.available_margin || d.account.equity || 100) * 0.5));
+              }
+              return prev;
+            });
+          }
         }
       })
       .catch(() => {});
@@ -63,32 +163,9 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
 
   useEffect(() => {
     fetchExecutionState();
-    const interval = setInterval(fetchExecutionState, 2500);
+    const interval = setInterval(fetchExecutionState, 2000);
     return () => clearInterval(interval);
-  }, []);
-
-  const handleResetCapital = (hardReset: boolean = true) => {
-    setCapitalLoading(true);
-    fetch("/api/execution/capital/reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ capital: parseFloat(inputCapital) || 10000, hard_reset: hardReset }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        setCapitalLoading(false);
-        if (d && d.success) {
-          setAccountState(d.state.account);
-          setIsCapitalModalOpen(false);
-          setOrderToast({
-            message: `Demo Capital set to $${parseFloat(inputCapital).toLocaleString()}! Ready for testing.`,
-            type: "success",
-          });
-          if (onTradeExecuted) onTradeExecuted();
-        }
-      })
-      .catch(() => setCapitalLoading(false));
-  };
+  }, [activeAccount?.id]);
 
   useEffect(() => {
     if (prefilledSignal) {
@@ -97,14 +174,19 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
       } else if (prefilledSignal.type === "BUY" || prefilledSignal.side === "BUY" || prefilledSignal.direction === "BUY") {
         setSide("BUY");
       }
-      if (prefilledSignal.stop_loss && currentAsset.price) {
-        const pctDiff = ((prefilledSignal.stop_loss - currentAsset.price) / currentAsset.price) * 100;
-        setSelectedSlPreset(Math.round(pctDiff));
+      if (prefilledSignal.stop_loss) {
+        setCustomSlPrice(String(prefilledSignal.stop_loss));
       }
-      if (prefilledSignal.take_profit_targets && prefilledSignal.take_profit_targets.length > 0 && currentAsset.price) {
-        const pctDiff = ((prefilledSignal.take_profit_targets[0] - currentAsset.price) / currentAsset.price) * 100;
-        setSelectedTpPreset(Math.round(pctDiff));
+      if (prefilledSignal.take_profit_targets && prefilledSignal.take_profit_targets.length > 0) {
+        setCustomTpPrice(String(prefilledSignal.take_profit_targets[0]));
+      } else if (prefilledSignal.take_profit) {
+        setCustomTpPrice(String(prefilledSignal.take_profit));
       }
+      if (prefilledSignal.leverage) {
+        setLeverage(prefilledSignal.leverage);
+        setCustomLeverage(String(prefilledSignal.leverage));
+      }
+      setIsAiSynced(true);
     }
   }, [prefilledSignal]);
 
@@ -121,17 +203,21 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
   const currentPrice = currentAsset.price || 2684.40;
   const isGold = currentAsset.symbol === "XAUUSD";
 
-  // Calculations for Order sizing
-  const notionalExposure = amount * leverage;
+  // Calculations for Order sizing with Account-Level Leverage support
+  const activeLeverage = activeAccount?.leverage || (customLeverage !== "" ? Math.max(1, Number(customLeverage)) : leverage);
+  const notionalExposure = amount * activeLeverage;
   const marginRequired = amount;
+  const autoLot = Math.max(0.01, Number((notionalExposure / (currentPrice * (isGold ? 100 : 1))).toFixed(2)));
+  const lotSize = customLot ? Math.max(0.01, parseFloat(customLot)) : autoLot;
+
   const slPrice = (currentPrice * (1 + (side === "BUY" ? selectedSlPreset / 100 : -selectedSlPreset / 100))).toFixed(2);
   const tpPrice = (currentPrice * (1 + (side === "BUY" ? selectedTpPreset / 100 : -selectedTpPreset / 100))).toFixed(2);
 
-  // Risk rating based on leverage
+  // Risk rating based on active leverage
   const riskBadge =
-    leverage <= 10
+    activeLeverage <= 10
       ? { label: "Low Risk", color: "bg-emerald-500/15 text-[#10B981] border-emerald-500/30" }
-      : leverage <= 30
+      : activeLeverage <= 30
       ? { label: "Moderate Risk", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" }
       : { label: "High Risk", color: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
 
@@ -161,32 +247,36 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
     return m;
   });
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (overrideSide?: "BUY" | "SELL") => {
     setExecuting(true);
     try {
-      const autoLot = Math.max(0.01, Number((notionalExposure / (currentPrice * (isGold ? 100 : 1))).toFixed(2)));
-      const lotSize = customLot ? Math.max(0.01, parseFloat(customLot)) : autoLot;
-      const finalSl = customSlPrice ? parseFloat(customSlPrice) : parseFloat(slPrice);
-      const finalTp = customTpPrice ? parseFloat(customTpPrice) : parseFloat(tpPrice);
+      const activeSide = overrideSide || side || aiStanceData?.direction || "BUY";
+      const finalSl = customSlPrice
+        ? parseFloat(customSlPrice)
+        : (aiStanceData?.levels?.stop_loss ? Number(aiStanceData.levels.stop_loss) : parseFloat(slPrice));
+      const finalTp = customTpPrice
+        ? parseFloat(customTpPrice)
+        : (aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2) : (aiStanceData?.levels?.target_1 ? Number(aiStanceData.levels.target_1) : parseFloat(tpPrice)));
 
       const res = await fetch("/api/execution/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           symbol: currentAsset.symbol,
-          side: side,
+          side: activeSide,
           order_type: "MARKET",
           quantity: lotSize,
           entry_price: currentPrice,
           stop_loss: finalSl,
           take_profit: finalTp,
-          leverage: leverage,
+          leverage: activeLeverage,
+          account_id: activeAccount?.id || "ACC_DEFAULT",
         }),
       });
       const data = await res.json();
       if (res.ok) {
         setOrderToast({
-          message: `${side} Order for ${currentAsset.symbol} filled at $${currentPrice.toFixed(2)} (${lotSize} Lots)!`,
+          message: `${activeSide} Order placed on [${activeAccount?.name || 'Demo'}]: Filled at $${currentPrice.toFixed(2)} (${lotSize} Lots, ${activeLeverage}x, SL: $${finalSl}, TP: $${finalTp})`,
           type: "success",
         });
         fetchExecutionState();
@@ -204,7 +294,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
       });
     } finally {
       setExecuting(false);
-      setTimeout(() => setOrderToast(null), 4000);
+      setTimeout(() => setOrderToast(null), 5000);
     }
   };
 
@@ -276,82 +366,17 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             </span>
           </div>
 
-          <button
-            onClick={() => setIsCapitalModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-well hover:bg-well-subtle border border-border-subtle text-main font-bold text-xs transition-all flex items-center gap-1.5 shrink-0"
-          >
-            <span className="material-symbols-outlined text-[16px] text-amber-500">tune</span>
-            <span>Set Custom Capital</span>
-          </button>
+          {onOpenAccountManager && (
+            <button
+              onClick={onOpenAccountManager}
+              className="px-3.5 py-2 rounded-xl bg-well hover:bg-well-subtle border border-border-subtle text-main font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px] text-amber-500">manage_accounts</span>
+              <span>Manage Accounts</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Set Custom Capital Modal */}
-      {isCapitalModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-surface border border-border-subtle rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-500 text-[20px]">account_balance</span>
-                <h3 className="text-[15px] font-bold text-main">Demo Capital Fix Karein</h3>
-              </div>
-              <button
-                onClick={() => setIsCapitalModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-well flex items-center justify-center text-muted hover:text-main"
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </div>
-
-            <p className="text-xs text-muted leading-relaxed">
-              Aap apne demo paper account ka initial balance apni marzi se set kar sakte hain (e.g. $1,000, $5,000, $10,000) taake real trading jaisi practice ho sake.
-            </p>
-
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted mb-1">
-                Custom Demo Capital ($)
-              </label>
-              <input
-                type="number"
-                value={inputCapital}
-                onChange={(e) => setInputCapital(e.target.value)}
-                className="w-full text-lg font-mono font-bold px-4 py-2.5 rounded-xl bg-well border border-border-subtle text-main outline-none"
-                placeholder="e.g. 5000"
-              />
-            </div>
-
-            {/* Quick Presets */}
-            <div className="flex items-center gap-2">
-              {[1000, 5000, 10000, 25000, 50000].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setInputCapital(String(val))}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-mono font-bold bg-well border border-border-subtle hover:bg-well-subtle text-muted hover:text-main transition-colors"
-                >
-                  ${val >= 1000 ? `${val / 1000}k` : val}
-                </button>
-              ))}
-            </div>
-
-            <div className="pt-2 flex gap-2">
-              <button
-                onClick={() => handleResetCapital(false)}
-                disabled={capitalLoading}
-                className="flex-1 py-3 rounded-xl bg-well border border-border-subtle hover:bg-well-subtle text-main font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
-              >
-                Update Capital
-              </button>
-              <button
-                onClick={() => handleResetCapital(true)}
-                disabled={capitalLoading}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
-              >
-                {capitalLoading ? "Setting..." : "Reset & Start Fresh"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ============================================================ */}
@@ -389,12 +414,11 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                         {currentAsset.name}
                       </span>
 
-                      <span className="bg-purple-500/10 border border-purple-500/30 text-purple-400 px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px]">
-                          verified
+                      {currentAsset.shariah_status === "Shariah Compliant" && (
+                        <span className="text-[11px] text-muted font-medium ml-1">
+                          • Halal
                         </span>
-                        Shariah Verified
-                      </span>
+                      )}
                     </div>
 
                     <div className="flex items-baseline gap-3 mt-1">
@@ -638,58 +662,55 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             </div>
           </div>
 
-          {/* Mini Asset Carousel / Bottom Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {displayMiniAssets.map((item) => (
-              <div
-                key={item.pair}
-                onClick={() => onSelectSymbol(item.symbol)}
-                className="bg-surface border border-border-subtle rounded-2xl p-4 card-shadow hover:border-border-strong cursor-pointer transition-all active:scale-[0.98]"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[13px] text-main">
-                      {item.pair}
-                    </span>
-                  </div>
-                  <span
-                    className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                      item.isUp
-                        ? "bg-emerald-500/15 text-[#10B981]"
-                        : "bg-amber-500/15 text-amber-400"
+          {/* Live Market Watch & Quick Switch Grid (Balances layout height & provides 1-click asset switching) */}
+          <div className="bg-surface border border-border-subtle rounded-3xl p-5 card-shadow flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-amber-500">candlestick_chart</span>
+                <span className="text-[13px] font-extrabold text-main">Live Market Watch &amp; Quick Switch</span>
+              </div>
+              <span className="text-[10px] font-mono text-muted">Click asset to analyze &amp; trade</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {assets.slice(0, 8).map((asset) => {
+                const isSelected = asset.symbol === selectedSymbol;
+                const isPositive = (asset.change_24h ?? 0) >= 0;
+                return (
+                  <button
+                    key={asset.symbol}
+                    onClick={() => onSelectSymbol(asset.symbol)}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                      isSelected
+                        ? isDark
+                          ? "bg-white/10 border-white/40 shadow-sm"
+                          : "bg-black/5 border-black/30 shadow-sm"
+                        : "bg-well border-border-subtle hover:border-border-muted"
                     }`}
                   >
-                    {item.change}
-                  </span>
-                </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-mono font-black text-xs text-main">{asset.symbol}</span>
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                          isPositive ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"
+                        }`}
+                      >
+                        {isPositive ? "+" : ""}{(asset.change_24h ?? 0).toFixed(2)}%
+                      </span>
+                    </div>
 
-                <div className="font-mono text-[16px] font-bold text-main mb-2 tabular-nums">
-                  ${typeof item.price === "number" ? item.price.toLocaleString() : item.price}
-                </div>
-
-                <svg className="w-full h-8" fill="none" viewBox="0 0 120 30">
-                  <path
-                    d={
-                      item.isUp
-                        ? "M0 24 Q 20 28, 40 18 T 80 12 T 120 4"
-                        : "M0 6 Q 35 8, 70 20 T 120 26"
-                    }
-                    stroke={item.isUp ? "#10B981" : "#F59E0B"}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d={
-                      item.isUp
-                        ? "M0 24 Q 20 28, 40 18 T 80 12 T 120 4 L 120 30 L 0 30 Z"
-                        : "M0 6 Q 35 8, 70 20 T 120 26 L 120 30 L 0 30 Z"
-                    }
-                    fill={item.isUp ? "#10B981" : "#F59E0B"}
-                    fillOpacity="0.1"
-                  />
-                </svg>
-              </div>
-            ))}
+                    <div>
+                      <div className="font-mono font-bold text-[13px] text-main tabular-nums">
+                        ${(asset.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      </div>
+                      <div className="text-[10px] text-muted font-sans truncate mt-0.5">
+                        {asset.name}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -723,35 +744,81 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             </button>
           </div>
 
-          {/* AI Master Stance Card */}
-          <div className="bg-surface border border-border-subtle rounded-3xl p-5 card-shadow">
-            <div className="flex items-center justify-between pb-3">
+          {/* AI Master Stance Card (Real-Time Live Analysis) */}
+          <div className="bg-surface border border-border-subtle rounded-3xl p-5 card-shadow flex flex-col gap-3">
+            {/* Top Row: Title, Live Timestamp & Re-Analyze Live Button */}
+            <div className="flex items-center justify-between gap-2 border-b border-border-subtle pb-3">
               <div>
                 <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
                   AI Master Stance
                 </span>
-                <div className="mt-1 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-muted">
+                    {isAnalyzingStance
+                      ? "AI Analyzing Live..."
+                      : lastStanceTimestamp
+                      ? `Live at ${lastStanceTimestamp}`
+                      : "Real-Time Synced"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Manual Re-Analyze Live Now Button */}
+              <button
+                onClick={() => fetchLiveAIStance(currentAsset.symbol)}
+                disabled={isAnalyzingStance}
+                className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                title="Run fresh live AI multi-agent analysis on current price tick"
+              >
+                <span className={`material-symbols-outlined text-[14px] ${isAnalyzingStance ? "animate-spin" : ""}`}>
+                  {isAnalyzingStance ? "sync" : "refresh"}
+                </span>
+                <span>{isAnalyzingStance ? "Analyzing..." : "Re-Analyze"}</span>
+              </button>
+            </div>
+
+            {/* Stance Banner & Confidence Gauge */}
+            <div className="flex items-center justify-between pt-1">
+              <div>
+                <div className="flex items-center gap-1.5">
                   <span
-                    className={`px-3 py-1 rounded-full text-[13px] font-bold flex items-center gap-1.5 ${
-                      side === "BUY"
+                    className={`px-3 py-1 rounded-full text-[13px] font-black flex items-center gap-1.5 ${
+                      isAnalyzingStance
+                        ? "bg-blue-500/15 border border-blue-500/30 text-blue-400"
+                        : (aiStanceData?.direction || side) === "BUY"
                         ? "bg-emerald-500/15 border border-emerald-500/30 text-[#10B981]"
-                        : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
+                        : (aiStanceData?.direction || side) === "SELL"
+                        ? "bg-rose-500/15 border border-rose-500/30 text-rose-400"
+                        : "bg-amber-500/15 border border-amber-500/30 text-amber-400"
                     }`}
                   >
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        side === "BUY" ? "bg-[#10B981] animate-pulse" : "bg-rose-500"
+                        isAnalyzingStance
+                          ? "bg-blue-400 animate-spin"
+                          : (aiStanceData?.direction || side) === "BUY"
+                          ? "bg-[#10B981] animate-pulse"
+                          : (aiStanceData?.direction || side) === "SELL"
+                          ? "bg-rose-500"
+                          : "bg-amber-400"
                       }`}
                     />
-                    {side === "BUY" ? "STRONG BUY" : "TACTICAL SHORT"}
+                    {isAnalyzingStance
+                      ? "ANALYZING..."
+                      : (aiStanceData?.direction || side) === "BUY"
+                      ? "STRONG BUY"
+                      : (aiStanceData?.direction || side) === "SELL"
+                      ? "TACTICAL SHORT"
+                      : "WAIT FOR RETEST"}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2.5">
                 {/* Radial Gauge */}
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
+                <div className="relative w-11 h-11 flex items-center justify-center">
+                  <svg className="w-11 h-11 transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       className="text-muted/20"
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -760,67 +827,118 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                       strokeWidth="3"
                     />
                     <path
-                      className={side === "BUY" ? "text-[#10B981]" : "text-rose-500"}
+                      className={
+                        (aiStanceData?.direction || side) === "BUY" ? "text-[#10B981]" : "text-rose-500"
+                      }
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="currentColor"
-                      strokeDasharray="89, 100"
-                      strokeLinecap="round"
                       strokeWidth="3"
+                      strokeDasharray={`${aiStanceData?.confidence_score || 84}, 100`}
+                      strokeLinecap="round"
                     />
                   </svg>
-                  <span className="absolute font-mono text-[12px] font-bold text-main">
-                    89%
+                  <span className="absolute font-mono text-[11px] font-bold text-main">
+                    {aiStanceData?.confidence_score || 84}%
                   </span>
-                </div>
-                <div className="text-left">
-                  <span className="text-[12px] font-bold text-main block">
-                    High Conviction
-                  </span>
-                  <span className="text-[11px] text-muted">Macro Sync</span>
                 </div>
               </div>
             </div>
 
-            {/* Levels Well */}
-            <div className="bg-well border border-border-subtle rounded-xl p-3.5 my-2 space-y-2 text-[12px] font-mono">
+            {/* Dynamic Calculated Levels Well */}
+            <div className="bg-well border border-border-subtle rounded-2xl p-4 space-y-2.5 text-[12px] font-mono">
               <div className="flex justify-between items-center">
                 <span className="text-muted font-sans font-medium">Entry Zone</span>
                 <span className="font-bold text-main">
-                  ${(currentPrice * 0.999).toFixed(2)} — ${(currentPrice * 1.001).toFixed(2)}
+                  {aiStanceData?.levels?.entry_zone ||
+                    `$${(currentPrice * 0.9998).toFixed(2)} — $${(currentPrice * 1.0002).toFixed(2)}`}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted font-sans font-medium">Stop Loss</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted font-sans font-medium">Stop Loss</span>
+                  {aiStanceData?.levels?.max_risk_usd !== undefined && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-rose-500/15 text-rose-400 font-bold border border-rose-500/25">
+                      Max Loss: -${Number(aiStanceData.levels.max_risk_usd).toFixed(2)}
+                    </span>
+                  )}
+                </div>
                 <span className="font-bold text-rose-400">
-                  ${slPrice} ({selectedSlPreset}%)
+                  ${aiStanceData?.levels?.stop_loss ? Number(aiStanceData.levels.stop_loss).toFixed(2) : slPrice}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted font-sans font-medium">Target 1</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted font-sans font-medium">Target 1</span>
+                  {aiStanceData?.levels?.tp1_gain_usd !== undefined && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/25">
+                      +${Number(aiStanceData.levels.tp1_gain_usd).toFixed(2)}
+                    </span>
+                  )}
+                </div>
                 <span className="font-semibold text-[#10B981]">
-                  ${(currentPrice * 1.01).toFixed(2)} (1:1.8)
+                  ${aiStanceData?.levels?.target_1 ? Number(aiStanceData.levels.target_1).toFixed(2) : (currentPrice * 1.01).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted font-sans font-medium">Target 2</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted font-sans font-medium">Target 2</span>
+                  {aiStanceData?.levels?.tp2_gain_usd !== undefined && (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/25">
+                      +${Number(aiStanceData.levels.tp2_gain_usd).toFixed(2)}
+                    </span>
+                  )}
+                </div>
                 <span className="font-semibold text-[#10B981]">
-                  ${tpPrice} (+{selectedTpPreset}%)
+                  ${aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2).toFixed(2) : tpPrice}
                 </span>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-border-subtle">
+
+              {/* Liquidation Buffer & Account Protection Indicator */}
+              {aiStanceData?.levels?.liquidation_price && (
+                <div className="flex justify-between items-center pt-2 border-t border-border-subtle text-[11px]">
+                  <span className="text-muted font-sans flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-emerald-400">shield</span>
+                    Account Buffer:
+                  </span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <span>SAFE</span>
+                    <span className="text-muted font-normal text-[10px]">
+                      (Stopout at ${Number(aiStanceData.levels.liquidation_price).toFixed(2)})
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-1 border-t border-border-subtle">
                 <span className="text-muted font-sans font-bold">Risk : Reward</span>
-                <span className="font-bold text-main">1 : 3.4</span>
+                <span className="font-bold text-main">
+                  {aiStanceData?.levels?.risk_reward || "1 : 2.0"}
+                </span>
               </div>
             </div>
 
+
+
+            {/* Risk Management Note (Roman Urdu) */}
+            {aiStanceData?.risk_officer_urdu && (
+              <div className="p-3 rounded-2xl bg-well border border-border-subtle text-[11px]">
+                <span className="text-muted font-bold text-[10px] uppercase tracking-wider block mb-1">
+                  Risk Management Note
+                </span>
+                <p className="text-main leading-relaxed font-sans">
+                  {aiStanceData.risk_officer_urdu}
+                </p>
+              </div>
+            )}
+
             {/* Trigger Drawer Link */}
-            <div className="mt-2 text-right">
+            <div className="text-right">
               <button
                 onClick={onOpenDeepDive}
-                className="text-[12px] font-bold text-muted hover:text-main inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-[12px] font-bold text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <span>View full analysis</span>
+                <span>View full analysis &amp; debate</span>
                 <span className="material-symbols-outlined text-[14px]">
                   arrow_forward
                 </span>
@@ -830,18 +948,88 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
 
           {/* Order Input & Leverage Card */}
           <div className="bg-surface border border-border-subtle rounded-3xl p-5 card-shadow flex flex-col gap-4">
-            {/* Amount Section (Typed + Presets) */}
+
+            {/* Targets (TP1 & TP2) Selector */}
+            <div className="p-3.5 rounded-2xl bg-well border border-border-subtle flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">
+                  Target Selection ({side})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => syncToAiLevels(selectedAiTp === "TP1" ? "TP1" : "TP2")}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface border border-border-subtle text-muted hover:text-main cursor-pointer flex items-center gap-1 transition-all"
+                  title="Sync SL & TP to current analysis"
+                >
+                  <span className="material-symbols-outlined text-[13px]">refresh</span>
+                  <span>Sync Targets</span>
+                </button>
+              </div>
+
+              {/* Both Positions / Targets given by AI */}
+              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAiTp("TP1");
+                    if (aiStanceData?.levels?.target_1) {
+                      setCustomTpPrice(String(Number(aiStanceData.levels.target_1).toFixed(2)));
+                    }
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    selectedAiTp === "TP1"
+                      ? "bg-emerald-500/20 border-emerald-400 text-white font-black shadow-sm"
+                      : "bg-well border-border-subtle text-muted hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[10px] text-muted font-sans font-bold">
+                    <span>Position 1: TP 1</span>
+                    {selectedAiTp === "TP1" && <span className="text-emerald-400 font-bold">✓ Active</span>}
+                  </div>
+                  <div className="text-emerald-400 font-black font-mono mt-0.5">
+                    ${aiStanceData?.levels?.target_1 ? Number(aiStanceData.levels.target_1).toFixed(2) : "—"}
+                  </div>
+                  <div className="text-[9px] text-muted font-sans mt-0.5">Conservative Target</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAiTp("TP2");
+                    if (aiStanceData?.levels?.target_2) {
+                      setCustomTpPrice(String(Number(aiStanceData.levels.target_2).toFixed(2)));
+                    }
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    selectedAiTp === "TP2"
+                      ? "bg-emerald-500/20 border-emerald-400 text-white font-black shadow-sm"
+                      : "bg-well border-border-subtle text-muted hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[10px] text-muted font-sans font-bold">
+                    <span>Position 2: TP 2</span>
+                    {selectedAiTp === "TP2" && <span className="text-emerald-400 font-bold">✓ Active</span>}
+                  </div>
+                  <div className="text-emerald-400 font-black font-mono mt-0.5">
+                    ${aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2).toFixed(2) : "—"}
+                  </div>
+                  <div className="text-[9px] text-muted font-sans mt-0.5">Extended Runner TP</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Amount Section (Typed + Equity % Presets) */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-[12px] font-semibold text-muted">Amount ($)</label>
-                <span className="text-[11px] text-muted">Type custom or pick preset</span>
+                <span className="text-[11px] text-muted">Type custom capital or pick %</span>
               </div>
               <div className="flex items-center justify-between bg-well border border-border-subtle rounded-xl px-3.5 py-1.5 focus-within:border-blue-500 transition-colors">
                 <input
                   type="number"
                   value={amount || ""}
                   onChange={(e) => setAmount(Number(e.target.value))}
-                  placeholder="5000"
+                  placeholder="100"
                   className="w-full bg-transparent font-mono text-[22px] font-bold text-main tabular-nums outline-none"
                 />
                 <span className="bg-surface border border-border-subtle px-3 py-1 rounded-full text-[11px] font-bold text-main shrink-0">
@@ -849,64 +1037,61 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                 </span>
               </div>
 
-              {/* Amount Quick Presets */}
+              {/* Amount Quick Percentage of Equity Presets */}
               <div className="flex items-center justify-between gap-1.5 mt-2">
-                {[1000, 2500, 5000, 10000, 25000].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setAmount(val)}
-                    className={`flex-1 py-1 rounded-full font-mono text-[11px] font-semibold transition-all ${
-                      amount === val
-                        ? isDark
-                          ? "bg-white text-black font-bold shadow-sm"
-                          : "bg-black text-white font-bold shadow-sm"
-                        : "bg-well border border-border-subtle text-muted hover:text-main"
-                    }`}
-                  >
-                    {val >= 1000 ? `${val / 1000}k` : val}
-                  </button>
-                ))}
+                {[0.25, 0.50, 0.75, 1.0].map((pct) => {
+                  const avail = accountState?.available_margin || accountState?.equity || 100;
+                  const targetAmt = Math.max(10, Math.round(avail * pct));
+                  return (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setAmount(targetAmt)}
+                      className={`flex-1 py-1 rounded-full font-mono text-[10px] font-bold border transition-all cursor-pointer ${
+                        amount === targetAmt
+                          ? isDark
+                            ? "bg-white text-black font-bold shadow-sm"
+                            : "bg-black text-white font-bold shadow-sm"
+                          : "bg-well border border-border-subtle text-muted hover:text-main"
+                      }`}
+                    >
+                      {pct * 100}% (${targetAmt})
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Leverage Section (Typed + Slider) */}
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-semibold text-muted">Leverage</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskBadge.color}`}>
-                    {riskBadge.label}
-                  </span>
+            {/* Account Leverage Setting Spec */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-well border border-border-subtle">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <span className="material-symbols-outlined text-[16px]">tune</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={leverage}
-                    onChange={(e) => setLeverage(Math.min(100, Math.max(1, Number(e.target.value))))}
-                    className="w-14 text-right font-mono text-[13px] font-bold px-2 py-0.5 rounded-lg bg-well border border-border-subtle text-main outline-none focus:border-blue-500"
-                  />
-                  <span className="font-mono text-[13px] font-bold text-main">x</span>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-muted block">Account Leverage</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs font-mono font-black text-main">
+                      1:{activeAccount?.leverage || leverage || 100} Fixed (Broker Standard)
+                    </span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${riskBadge.color}`}>
+                      {riskBadge.label}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="relative w-full py-1">
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={leverage}
-                  onChange={(e) => setLeverage(Number(e.target.value))}
-                  className="w-full h-1.5 bg-well rounded-lg appearance-none cursor-pointer focus:outline-none"
-                />
-                <div className="flex justify-between text-[10px] text-muted font-mono mt-1 px-1">
-                  <span>1x</span>
-                  <span>25x</span>
-                  <span>50x</span>
-                  <span>75x</span>
-                  <span>100x</span>
-                </div>
-              </div>
+
+              {onOpenAccountManager && (
+                <button
+                  type="button"
+                  onClick={onOpenAccountManager}
+                  className="px-2.5 py-1 rounded-xl bg-surface border border-border-subtle hover:border-amber-400/50 text-[11px] font-mono font-bold text-muted hover:text-main flex items-center gap-1 transition-all cursor-pointer"
+                  title="Modify leverage in Account Settings"
+                >
+                  <span className="material-symbols-outlined text-[13px]">settings</span>
+                  <span>Settings</span>
+                </button>
+              )}
             </div>
 
             {/* Lot Size Section (Typed Custom Lot or Auto-Calculated) */}
@@ -943,10 +1128,17 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               </div>
             </div>
 
-            {/* Stop Loss (Presets + Typed Price) */}
+            {/* Stop Loss (Presets + Typed Price + AI Sync Badge) */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[12px] font-semibold text-muted">Stop Loss Price</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] font-semibold text-muted">Stop Loss Price</span>
+                  {customSlPrice && customSlPrice === String(Number(aiStanceData?.levels?.stop_loss).toFixed(2)) && (
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                      AI SL Synced
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
                   step="0.1"
@@ -978,10 +1170,17 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               </div>
             </div>
 
-            {/* Take Profit (Presets + Typed Price) */}
+            {/* Take Profit (Presets + Typed Price + AI Sync Badge) */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[12px] font-semibold text-muted">Take Profit Price</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] font-semibold text-muted">Take Profit Price</span>
+                  {customTpPrice && (customTpPrice === String(Number(aiStanceData?.levels?.target_2).toFixed(2)) || customTpPrice === String(Number(aiStanceData?.levels?.target_1).toFixed(2))) && (
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                      AI TP Synced
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
                   step="0.1"
@@ -1031,9 +1230,9 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
 
             {/* Place Order CTA Button */}
             <button
-              onClick={handlePlaceOrder}
+              onClick={() => handlePlaceOrder()}
               disabled={executing}
-              className={`w-full py-4 rounded-full font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1 cursor-pointer ${
+              className={`w-full py-4 rounded-full font-extrabold text-[14px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-1 cursor-pointer ${
                 side === "BUY"
                   ? isDark
                     ? "bg-white hover:bg-neutral-200 text-black shadow-[0_0_24px_rgba(255,255,255,0.28)]"
@@ -1041,7 +1240,11 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                   : "bg-rose-500 hover:bg-rose-600 text-white shadow-[0_0_24px_rgba(244,63,94,0.35)]"
               }`}
             >
-              <span>{executing ? "Executing Trade..." : `Place ${side} Order`}</span>
+              <span>
+                {executing
+                  ? "Executing Trade..."
+                  : `⚡ Place ${side} Order on AI Signal (SL: $${customSlPrice || (aiStanceData?.levels?.stop_loss ? Number(aiStanceData.levels.stop_loss).toFixed(2) : slPrice)} | TP: $${customTpPrice || (aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2).toFixed(2) : tpPrice)})`}
+              </span>
               <span className="material-symbols-outlined text-[18px] font-bold">
                 arrow_forward
               </span>

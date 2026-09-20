@@ -9,6 +9,7 @@ import { BacktestScreen } from "./screens/BacktestScreen";
 import { InstitutionalCotScreen } from "./screens/InstitutionalCotScreen";
 import { AgentDeepDiveDrawer } from "./components/AgentDeepDiveDrawer";
 import { ManageChannelsModal } from "./components/ManageChannelsModal";
+import { DemoAccountManagerModal, DemoAccount } from "./components/DemoAccountManagerModal";
 
 export default function App() {
   // Theme Management (Light vs Dark OLED)
@@ -32,9 +33,14 @@ export default function App() {
   // Navigation State (5 Top-Level Tabs)
   const [activeTab, setActiveTab] = useState<string>("trade");
 
-  // Secondary Surfaces State (Exactly 2 secondary surfaces)
+  // Secondary Surfaces State (Modals & Drawers)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isChannelsModalOpen, setIsChannelsModalOpen] = useState(false);
+  const [isAccountManagerOpen, setIsAccountManagerOpen] = useState(false);
+
+  // Demo Accounts State
+  const [accounts, setAccounts] = useState<DemoAccount[]>([]);
+  const [activeAccount, setActiveAccount] = useState<DemoAccount | null>(null);
 
   // Selected Asset & Intelligence Dossier
   const [selectedAsset, setSelectedAsset] = useState<string>("XAUUSD");
@@ -60,7 +66,104 @@ export default function App() {
 
   const [assets, setAssets] = useState<any[]>(defaultAssets);
 
-  // 1. Initial Assets Fetch & Health Check
+  // 1. Fetch Demo Accounts
+  const fetchAccounts = () => {
+    fetch("/api/execution/accounts")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.success && Array.isArray(d.accounts)) {
+          setAccounts(d.accounts);
+          const active = d.accounts.find((a: DemoAccount) => a.id === d.active_account_id) || d.accounts.find((a: DemoAccount) => a.is_active === 1) || d.accounts[0];
+          if (active) {
+            setActiveAccount(active);
+            setAccountEquity(active.equity);
+          }
+        }
+      })
+      .catch(() => {});
+  };
+
+  const handleSwitchAccount = async (id: string) => {
+    try {
+      const res = await fetch(`/api/execution/accounts/switch/${id}`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.active_account) {
+        setActiveAccount(data.active_account);
+        setAccountEquity(data.active_account.equity);
+        fetchAccounts();
+        fetchHealthAndState();
+      }
+    } catch (e) {
+      console.error("Failed to switch account:", e);
+    }
+  };
+
+  const handleCreateAccount = async (name: string, capital: number, setActive: boolean, leverage?: number) => {
+    try {
+      const res = await fetch("/api/execution/accounts/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, capital, leverage: leverage || 100, set_active: setActive }),
+      });
+      const data = await res.json();
+      if (res.ok && data.account) {
+        fetchAccounts();
+        fetchHealthAndState();
+      }
+    } catch (e) {
+      console.error("Failed to create account:", e);
+      throw e;
+    }
+  };
+
+  const handleUpdateAccountSettings = async (id: string, name?: string, leverage?: number) => {
+    try {
+      const res = await fetch(`/api/execution/accounts/settings/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, leverage }),
+      });
+      const data = await res.json();
+      if (res.ok && data.account) {
+        fetchAccounts();
+        fetchHealthAndState();
+      }
+    } catch (e) {
+      console.error("Failed to update account settings:", e);
+    }
+  };
+
+  const handleResetAccount = async (id: string, capital?: number) => {
+    try {
+      const res = await fetch(`/api/execution/accounts/reset/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ capital }),
+      });
+      const data = await res.json();
+      if (res.ok && data.account) {
+        fetchAccounts();
+        fetchHealthAndState();
+      }
+    } catch (e) {
+      console.error("Failed to reset account:", e);
+    }
+  };
+
+  const handleDeleteAccount = async (id: string) => {
+    try {
+      const res = await fetch(`/api/execution/accounts/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        fetchAccounts();
+        fetchHealthAndState();
+      }
+    } catch (e) {
+      console.error("Failed to delete account:", e);
+    }
+  };
+
+  // 2. Initial Assets Fetch & Health Check
   const fetchAssets = () => {
     fetch("/api/assets")
       .then((r) => r.json())
@@ -87,19 +190,25 @@ export default function App() {
       .then((s) => {
         if (s && s.account && typeof s.account.equity === "number") {
           setAccountEquity(s.account.equity);
+          if (s.account.id) {
+            setActiveAccount((prev) => (prev && prev.id === s.account.id ? { ...prev, ...s.account } : prev));
+          }
         }
       })
       .catch(() => {});
   };
 
   useEffect(() => {
+    fetchAccounts();
     fetchAssets();
     fetchHealthAndState();
     const assetsInterval = setInterval(fetchAssets, 20000);
     const healthInterval = setInterval(fetchHealthAndState, 3000);
+    const accountsInterval = setInterval(fetchAccounts, 5000);
     return () => {
       clearInterval(assetsInterval);
       clearInterval(healthInterval);
+      clearInterval(accountsInterval);
     };
   }, []);
 
@@ -189,6 +298,8 @@ export default function App() {
         toggleTheme={toggleTheme}
         accountEquity={accountEquity}
         mt5Connected={mt5Connected}
+        activeAccount={activeAccount}
+        onOpenAccountManager={() => setIsAccountManagerOpen(true)}
       />
 
       {/* Dynamic Screen Viewport */}
@@ -203,9 +314,12 @@ export default function App() {
             }}
             onOpenDeepDive={() => setIsDrawerOpen(true)}
             isDark={isDark}
+            activeAccount={activeAccount}
+            onOpenAccountManager={() => setIsAccountManagerOpen(true)}
             onTradeExecuted={() => {
               fetchAssets();
               fetchHealthAndState();
+              fetchAccounts();
             }}
             prefilledSignal={prefilledSignal}
           />
@@ -223,16 +337,18 @@ export default function App() {
           <PositionsScreen
             onNewOrder={() => setActiveTab("trade")}
             isDark={isDark}
+            activeAccount={activeAccount}
+            onOpenAccountManager={() => setIsAccountManagerOpen(true)}
           />
         )}
 
         {activeTab === "macro" && <InstitutionalCotScreen isDark={isDark} />}
 
-        {activeTab === "backtest" && <BacktestScreen isDark={isDark} />}
+        {activeTab === "backtest" && <BacktestScreen isDark={isDark} activeAccount={activeAccount} />}
 
         {activeTab === "calendar" && <CalendarScreen isDark={isDark} />}
 
-        {activeTab === "vault" && <VaultScreen isDark={isDark} />}
+        {activeTab === "vault" && <VaultScreen isDark={isDark} activeAccount={activeAccount} />}
       </div>
 
       {/* Secondary Surface 1: Agent Deep-Dive Drawer (Slide-Over from Right) */}
@@ -248,6 +364,20 @@ export default function App() {
       <ManageChannelsModal
         isOpen={isChannelsModalOpen}
         onClose={() => setIsChannelsModalOpen(false)}
+        isDark={isDark}
+      />
+
+      {/* Secondary Surface 3: Multiple Demo Accounts Manager Modal */}
+      <DemoAccountManagerModal
+        isOpen={isAccountManagerOpen}
+        onClose={() => setIsAccountManagerOpen(false)}
+        accounts={accounts}
+        activeAccountId={activeAccount?.id || "ACC_DEFAULT"}
+        onSwitchAccount={handleSwitchAccount}
+        onCreateAccount={handleCreateAccount}
+        onResetAccount={handleResetAccount}
+        onDeleteAccount={handleDeleteAccount}
+        onUpdateAccountSettings={handleUpdateAccountSettings}
         isDark={isDark}
       />
     </div>
