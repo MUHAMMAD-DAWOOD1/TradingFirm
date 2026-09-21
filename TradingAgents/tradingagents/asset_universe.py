@@ -43,6 +43,17 @@ ASSET_UNIVERSE: Dict[str, AssetMetadata] = {
         is_tradeable=True,
         description="Physical Silver against USD spot market."
     ),
+    "USOIL": AssetMetadata(
+        symbol="USOIL",
+        name="Crude Oil Cash",
+        category="commodity",
+        shariah_status="HALAL_COMPLIANT",
+        tradingview_symbol="TVC:USOIL",
+        yfinance_ticker="CL=F",
+        benchmark="DX-Y.NYB",
+        is_tradeable=True,
+        description="Spot West Texas Intermediate (WTI) Crude Oil Cash index against USD."
+    ),
     "EURUSD": AssetMetadata(
         symbol="EURUSD",
         name="Euro / US Dollar",
@@ -647,8 +658,23 @@ ASSET_UNIVERSE: Dict[str, AssetMetadata] = {
     ),
 }
 
+ALIASES = {
+    "OIL": "USOIL",
+    "WTI": "USOIL",
+    "CRUDE": "USOIL",
+    "USOILCASH": "USOIL",
+    "OILCRUDE": "USOIL",
+    "ATH": "AETHIR",
+    "FET": "ASI",
+    "ZBCN": "ZEBEC",
+    "GOLD": "XAUUSD",
+    "SILVER": "XAGUSD",
+}
+
 def get_asset(symbol: str) -> Optional[AssetMetadata]:
-    key = symbol.upper().replace("/", "").replace("-", "")
+    key = symbol.upper().replace("/", "").replace("-", "").replace(".", "").strip()
+    if key in ALIASES:
+        key = ALIASES[key]
     if key in ASSET_UNIVERSE:
         return ASSET_UNIVERSE[key]
     for asset in ASSET_UNIVERSE.values():

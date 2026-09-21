@@ -60,23 +60,39 @@ export default function App() {
     { symbol: "BNB", name: "BNB Chain", category: "crypto", price: 588.20, change24h: 0.85, shariah_status: "Permissible", tradingview_symbol: "BINANCE:BNBUSDT" },
     { symbol: "EURUSD", name: "Euro / US Dollar", category: "forex", price: 1.0842, change24h: 0.42, shariah_status: "Forex Spot", tradingview_symbol: "FX:EURUSD" },
     { symbol: "GBPUSD", name: "British Pound / US Dollar", category: "forex", price: 1.3065, change24h: -0.18, shariah_status: "Forex Spot", tradingview_symbol: "FX:GBPUSD" },
+    { symbol: "USDJPY", name: "US Dollar / Japanese Yen", category: "forex", price: 154.20, change24h: 0.28, shariah_status: "Forex Spot", tradingview_symbol: "FX:USDJPY" },
     { symbol: "XAGUSD", name: "Silver Spot", category: "commodity", price: 31.48, change24h: 1.64, shariah_status: "Shariah Compliant", tradingview_symbol: "OANDA:XAGUSD" },
+    { symbol: "USOIL", name: "WTI Crude Oil", category: "commodity", price: 71.50, change24h: -0.65, shariah_status: "Commodity Spot", tradingview_symbol: "TVC:USOIL" },
     { symbol: "NDX100", name: "Nasdaq 100", category: "index", price: 20384.50, change24h: 1.22, shariah_status: "Index Spot", tradingview_symbol: "NASDAQ:NDX" },
+    { symbol: "SPX500", name: "S&P 500 Index", category: "index", price: 5864.20, change24h: 0.74, shariah_status: "Index Spot", tradingview_symbol: "INDEX:SPX" },
   ];
 
   const [assets, setAssets] = useState<any[]>(defaultAssets);
 
-  // 1. Fetch Demo Accounts
+  // 1. Fetch Demo Accounts with Dual-Layer Persistence (localStorage + SQLite)
   const fetchAccounts = () => {
     fetch("/api/execution/accounts")
       .then((r) => r.json())
       .then((d) => {
         if (d && d.success && Array.isArray(d.accounts)) {
           setAccounts(d.accounts);
-          const active = d.accounts.find((a: DemoAccount) => a.id === d.active_account_id) || d.accounts.find((a: DemoAccount) => a.is_active === 1) || d.accounts[0];
-          if (active) {
-            setActiveAccount(active);
-            setAccountEquity(active.equity);
+          const savedId = localStorage.getItem("nexus_active_account_id");
+          let target = d.accounts.find((a: DemoAccount) => a.id === savedId);
+
+          if (!target) {
+            target = d.accounts.find((a: DemoAccount) => a.id === d.active_account_id) ||
+                     d.accounts.find((a: DemoAccount) => a.is_active === 1) ||
+                     d.accounts[0];
+          }
+
+          if (target) {
+            setActiveAccount(target);
+            setAccountEquity(target.equity);
+            localStorage.setItem("nexus_active_account_id", target.id);
+            // If backend active account differs from stored choice, synchronize backend
+            if (d.active_account_id !== target.id) {
+              fetch(`/api/execution/accounts/switch/${target.id}`, { method: "POST" }).catch(() => {});
+            }
           }
         }
       })
@@ -85,6 +101,7 @@ export default function App() {
 
   const handleSwitchAccount = async (id: string) => {
     try {
+      localStorage.setItem("nexus_active_account_id", id);
       const res = await fetch(`/api/execution/accounts/switch/${id}`, { method: "POST" });
       const data = await res.json();
       if (res.ok && data.active_account) {
@@ -107,6 +124,9 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.account) {
+        if (setActive) {
+          localStorage.setItem("nexus_active_account_id", data.account.id);
+        }
         fetchAccounts();
         fetchHealthAndState();
       }

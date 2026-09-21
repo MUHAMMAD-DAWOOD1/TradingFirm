@@ -23,13 +23,21 @@ except ImportError:
 SYMBOL_MAP = {
     "XAUUSD": "GC=F",
     "GOLD": "GC=F",
+    "USOIL": "CL=F",
+    "OIL": "CL=F",
+    "WTI": "CL=F",
     "BTC": "BTC-USD",
     "BTCUSD": "BTC-USD",
+    "ETH": "ETH-USD",
+    "SOL": "SOL-USD",
+    "BNB": "BNB-USD",
     "EURUSD": "EURUSD=X",
+    "GBPUSD": "GBPUSD=X",
     "SILVER": "SI=F",
+    "XAGUSD": "SI=F",
     "US30": "^DJI",
     "SPX": "^GSPC",
-    "ETH": "ETH-USD"
+    "NDX100": "^NDX"
 }
 
 STRATEGY_REGISTRY = [

@@ -17,6 +17,7 @@ try:
         save_persisted_account_state,
         get_open_paper_trades,
         get_closed_paper_trades,
+        get_filtered_paper_trades,
         get_all_demo_accounts,
         get_active_demo_account,
         get_demo_account,
@@ -30,6 +31,7 @@ except ImportError:
         save_persisted_account_state,
         get_open_paper_trades,
         get_closed_paper_trades,
+        get_filtered_paper_trades,
         get_all_demo_accounts,
         get_active_demo_account,
         get_demo_account,
@@ -68,6 +70,8 @@ class Position(BaseModel):
     opened_at: str
     closed_at: Optional[str] = None
     close_price: Optional[float] = None
+    realized_pnl: Optional[float] = 0.0
+    close_reason: Optional[str] = None
 
 
 # Persistent in-memory cache hydrated from SQLite
@@ -102,7 +106,7 @@ def hydrate_state_from_db():
         except Exception:
             pass
 
-    closed_rows = get_closed_paper_trades(limit=50)
+    closed_rows = get_closed_paper_trades(limit=200)
     for r in closed_rows:
         try:
             p = Position(
@@ -122,7 +126,9 @@ def hydrate_state_from_db():
                 status=r["status"],
                 opened_at=r["opened_at"],
                 closed_at=r["closed_at"],
-                close_price=float(r["close_price"]) if r["close_price"] is not None else None
+                close_price=float(r["close_price"]) if r["close_price"] is not None else None,
+                realized_pnl=float(r.get("realized_pnl") or 0.0),
+                close_reason=r.get("close_reason")
             )
             CLOSED_TRADES.append(p)
         except Exception:
@@ -139,6 +145,17 @@ def open_position(order: TradeOrder, current_market_price: float, account_id: Op
     """Execute new trade order against current market tick for specific demo account."""
     target_acc_id = account_id or order.account_id or get_active_demo_account()["id"]
     target_acc = get_demo_account(target_acc_id) or get_active_demo_account()
+
+    # Dynamic Live Account State Sync: recalculate equity and available margin from active positions
+    acc_open_trades = [p for p in ACTIVE_POSITIONS.values() if (p.account_id or "ACC_DEFAULT") == target_acc["id"]]
+    realized_bal = max(0.0, float(target_acc.get("balance", 0.0)))
+    unrealized_sum = sum(p.unrealized_pnl for p in acc_open_trades)
+    current_eq = max(0.0, round(realized_bal + unrealized_sum, 2))
+    margin_used_sum = round(sum(p.margin_usd for p in acc_open_trades), 2)
+    target_acc["balance"] = realized_bal
+    target_acc["equity"] = current_eq
+    target_acc["margin_used"] = margin_used_sum
+    target_acc["available_margin"] = max(0.0, round(current_eq - margin_used_sum, 2))
 
     pos_id = str(uuid.uuid4())[:8].upper()
     exec_price = current_market_price if order.order_type == "MARKET" else order.entry_price
@@ -157,6 +174,51 @@ def open_position(order: TradeOrder, current_market_price: float, account_id: Op
             "error": f"Insufficient margin on '{target_acc['name']}': Required ${margin_req} exceeds available ${target_acc['available_margin']:.2f}"
         }
 
+    # Sanity-check Stop-Loss & Take-Profit to prevent cross-asset leakage / immediate stopout
+    clean_sl = order.stop_loss
+    clean_tp = order.take_profit
+
+    if order.side.upper() == "BUY":
+        if clean_sl is not None and clean_sl >= exec_price:
+            # Corrupted SL on BUY -> recalculate to safe 2% below exec_price
+            clean_sl = round(exec_price * 0.98, 2 if exec_price > 1.0 else 4)
+        if clean_tp is not None and clean_tp <= exec_price:
+            clean_tp = round(exec_price * 1.03, 2 if exec_price > 1.0 else 4)
+    elif order.side.upper() == "SELL":
+        if clean_sl is not None and clean_sl <= exec_price:
+            # Corrupted SL on SELL -> recalculate to safe 2% above exec_price
+            clean_sl = round(exec_price * 1.02, 2 if exec_price > 1.0 else 4)
+        if clean_tp is not None and clean_tp >= exec_price:
+            clean_tp = round(exec_price * 0.97, 2 if exec_price > 1.0 else 4)
+
+    # --- INSTITUTIONAL RISK SHIELD & SL CLAMP ---
+    # Ensure potential dollar loss at Stop Loss NEVER exceeds account equity (Account Wash Prevention)
+    acc_equity = max(1.0, float(target_acc.get("equity") or target_acc.get("balance") or 10.0))
+    decimals = 2 if exec_price > 1.0 else 4
+    
+    # Micro accounts (<= $100) are capped at max 40-50% risk per trade; larger accounts capped at 20%
+    max_risk_pct = 0.50 if acc_equity <= 100.0 else 0.20
+    max_allowable_loss_usd = round(acc_equity * max_risk_pct, 2)
+
+    if order.quantity > 0:
+        if clean_sl is not None:
+            point_risk = abs(exec_price - clean_sl)
+            projected_loss_usd = point_risk * order.quantity
+            if projected_loss_usd > max_allowable_loss_usd:
+                # Clamp SL distance so the trade respects maximum survivable dollar loss
+                safe_sl_distance = max_allowable_loss_usd / order.quantity
+                if order.side.upper() == "BUY":
+                    clean_sl = round(exec_price - safe_sl_distance, decimals)
+                else:
+                    clean_sl = round(exec_price + safe_sl_distance, decimals)
+        else:
+            # Default institutional safety SL if none provided
+            safe_sl_distance = max_allowable_loss_usd / order.quantity
+            if order.side.upper() == "BUY":
+                clean_sl = round(exec_price - safe_sl_distance, decimals)
+            else:
+                clean_sl = round(exec_price + safe_sl_distance, decimals)
+
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
     pos = Position(
         id=pos_id,
@@ -166,8 +228,8 @@ def open_position(order: TradeOrder, current_market_price: float, account_id: Op
         quantity=order.quantity,
         entry_price=exec_price,
         current_price=exec_price,
-        stop_loss=order.stop_loss,
-        take_profit=order.take_profit,
+        stop_loss=clean_sl,
+        take_profit=clean_tp,
         leverage=order.leverage,
         margin_usd=margin_req,
         unrealized_pnl=0.0,
@@ -267,6 +329,27 @@ def update_positions_mark_to_market(current_prices: Dict[str, float]) -> List[Di
         if acc:
             acc["equity"] = round(acc["balance"] + unrealized, 2)
             acc["available_margin"] = round(acc["equity"] - acc["margin_used"], 2)
+
+            # --- INSTITUTIONAL BROKER STOP-OUT & LIQUIDATION TRIGGER ---
+            # Standard broker mechanics:
+            # Margin Level = (Equity / Margin Used) * 100%
+            # If Equity <= 0 or Margin Level <= 20%:
+            # The broker IMMEDIATELY liquidates all active positions to prevent negative balance!
+            margin_used = max(0.01, float(acc.get("margin_used", 0.0)))
+            margin_level = (acc["equity"] / margin_used) * 100.0 if margin_used > 0 else 1000.0
+
+            if acc["equity"] <= 0 or margin_level <= 20.0 or (acc["balance"] <= 50.0 and acc["equity"] <= acc["balance"] * 0.15):
+                # Emergency Stop-out / Liquidation: Close all open positions on this account
+                for pos_id, pos in list(ACTIVE_POSITIONS.items()):
+                    if (pos.account_id or "ACC_DEFAULT") == acc_id:
+                        tick_p = current_prices.get(pos.symbol, pos.current_price)
+                        c_pos = close_position(pos_id, tick_p, "LIQUIDATED_STOPOUT")
+                        if c_pos:
+                            closed_this_tick.append(c_pos)
+
+                # Re-fetch after liquidation
+                acc = get_demo_account(acc_id) or acc
+
             save_demo_account_state(acc_id, acc)
 
     return closed_this_tick
@@ -288,7 +371,12 @@ def close_position(pos_id: str, close_price: float, reason: str = "CLOSED_MANUAL
         diff = pos.entry_price - close_price
 
     final_pnl = round(diff * pos.quantity, 2)
-    pos.unrealized_pnl = final_pnl
+    pos.unrealized_pnl = 0.0
+    pos.realized_pnl = final_pnl
+    pos.close_reason = reason
+    pos.close_price = close_price
+    pos.status = "CLOSED"
+    pos.closed_at = time.strftime("%Y-%m-%d %H:%M:%S")
 
     acc_id = pos.account_id or "ACC_DEFAULT"
     acc = get_demo_account(acc_id) or get_active_demo_account()
@@ -299,10 +387,15 @@ def close_position(pos_id: str, close_price: float, reason: str = "CLOSED_MANUAL
     acc["realized_pnl"] = round(acc["realized_pnl"] + final_pnl, 2)
     acc["margin_used"] = max(0.0, round(acc["margin_used"] - pos.margin_usd, 2))
 
+    # --- NEGATIVE BALANCE PROTECTION (NBP) ---
+    # Real brokers guarantee accounts can never owe debt or drop below zero.
+    if acc["balance"] < 0:
+        acc["balance"] = 0.0
+
     # 2. Recalculate remaining unrealized PnL of other open trades on this account
     remaining_unrealized = sum(p.unrealized_pnl for p in ACTIVE_POSITIONS.values() if (p.account_id or "ACC_DEFAULT") == acc_id)
-    acc["equity"] = round(acc["balance"] + remaining_unrealized, 2)
-    acc["available_margin"] = round(acc["equity"] - acc["margin_used"], 2)
+    acc["equity"] = max(0.0, round(acc["balance"] + remaining_unrealized, 2))
+    acc["available_margin"] = max(0.0, round(acc["equity"] - acc["margin_used"], 2))
 
     if final_pnl >= 0:
         acc["win_count"] += 1
@@ -366,15 +459,51 @@ def get_execution_state(account_id: Optional[str] = None) -> Dict[str, Any]:
 
     acc_id = target_acc["id"]
 
+    # Guarantee in-memory ACTIVE_POSITIONS is fully hydrated with SQLite open positions
+    try:
+        db_open = get_open_paper_trades(account_id=acc_id)
+        for r in db_open:
+            if r["id"] not in ACTIVE_POSITIONS:
+                p = Position(
+                    id=r["id"],
+                    account_id=r.get("account_id") or acc_id,
+                    symbol=r["symbol"],
+                    side=r["side"],
+                    quantity=float(r["quantity"]),
+                    entry_price=float(r["entry_price"]),
+                    current_price=float(r["current_price"] or r["entry_price"]),
+                    stop_loss=float(r["stop_loss"]) if r.get("stop_loss") is not None else None,
+                    take_profit=float(r["take_profit"]) if r.get("take_profit") is not None else None,
+                    leverage=float(r.get("leverage") or 1.0),
+                    margin_usd=float(r.get("margin_usd") or 0.0),
+                    unrealized_pnl=float(r.get("unrealized_pnl") or 0.0),
+                    unrealized_pnl_pct=0.0,
+                    status="OPEN",
+                    opened_at=r["opened_at"]
+                )
+                ACTIVE_POSITIONS[p.id] = p
+    except Exception:
+        pass
+
     # Filter positions by account
     open_list = [p.model_dump() for p in ACTIVE_POSITIONS.values() if (p.account_id or "ACC_DEFAULT") == acc_id]
-    closed_rows = get_closed_paper_trades(limit=30, account_id=acc_id)
+    closed_rows = get_closed_paper_trades(limit=100, account_id=acc_id)
     closed_list = closed_rows if closed_rows else [
         p.model_dump() for p in CLOSED_TRADES if (p.account_id or "ACC_DEFAULT") == acc_id
-    ][:30]
+    ][:100]
 
     total_trades = target_acc.get("win_count", 0) + target_acc.get("loss_count", 0)
     win_rate = round((target_acc.get("win_count", 0) / max(total_trades, 1)) * 100, 1)
+
+    # Dynamic recalculation of equity based on active positions
+    open_unrealized = sum(p.get("unrealized_pnl", 0.0) for p in open_list)
+    calc_equity = max(0.0, round(float(target_acc.get("balance", 0.0)) + open_unrealized, 2))
+    calc_margin_used = round(sum(p.get("margin_usd", 0.0) for p in open_list), 2)
+    calc_available = max(0.0, round(calc_equity - calc_margin_used, 2))
+
+    target_acc["equity"] = calc_equity
+    target_acc["margin_used"] = calc_margin_used
+    target_acc["available_margin"] = calc_available
 
     return {
         "account": {

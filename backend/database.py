@@ -12,7 +12,7 @@ import sqlite3
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
 DB_PATH = os.getenv("NEXUS_DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "nexus_trading.db"))
@@ -519,6 +519,93 @@ def get_closed_paper_trades(limit: int = 50, account_id: Optional[str] = None) -
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows
+
+def get_filtered_paper_trades(
+    account_id: Optional[str] = None,
+    period: str = "all",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = 500
+) -> Dict[str, Any]:
+    """
+    Fetch closed paper trades from SQLite filtered by account, period, or custom date range,
+    and compute broker-grade institutional performance metrics (like Exness / XM / MT5).
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM paper_trades WHERE status != 'OPEN'"
+    params: List[Any] = []
+
+    # 1. Account Filter
+    if account_id and account_id.upper() != "ALL":
+        query += " AND (account_id = ? OR (account_id IS NULL AND ? = 'ACC_DEFAULT'))"
+        params.extend([account_id, account_id])
+
+    # 2. Time Period Filter
+    now = datetime.now()
+    clean_period = (period or "all").lower().strip()
+    if clean_period == "today":
+        today_start = now.strftime("%Y-%m-%d 00:00:00")
+        query += " AND COALESCE(closed_at, opened_at) >= ?"
+        params.append(today_start)
+    elif clean_period == "week":
+        week_start = (now - timedelta(days=7)).strftime("%Y-%m-%d 00:00:00")
+        query += " AND COALESCE(closed_at, opened_at) >= ?"
+        params.append(week_start)
+    elif clean_period == "month":
+        month_start = (now - timedelta(days=30)).strftime("%Y-%m-%d 00:00:00")
+        query += " AND COALESCE(closed_at, opened_at) >= ?"
+        params.append(month_start)
+    elif clean_period == "custom":
+        if start_date and start_date.strip():
+            query += " AND COALESCE(closed_at, opened_at) >= ?"
+            params.append(start_date.strip() + " 00:00:00")
+        if end_date and end_date.strip():
+            query += " AND COALESCE(closed_at, opened_at) <= ?"
+            params.append(end_date.strip() + " 23:59:59")
+
+    query += " ORDER BY COALESCE(closed_at, opened_at) DESC LIMIT ?"
+    params.append(limit)
+
+    cursor.execute(query, tuple(params))
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    # Calculate Institutional Financial Performance Metrics
+    wins = [r for r in rows if float(r.get("realized_pnl") or 0.0) > 0]
+    losses = [r for r in rows if float(r.get("realized_pnl") or 0.0) < 0]
+    breakeven = [r for r in rows if float(r.get("realized_pnl") or 0.0) == 0]
+
+    gross_profit = round(sum(float(r.get("realized_pnl") or 0.0) for r in wins), 2)
+    gross_loss = round(abs(sum(float(r.get("realized_pnl") or 0.0) for r in losses)), 2)
+    net_pnl = round(gross_profit - gross_loss, 2)
+    total_trades = len(rows)
+    decided = len(wins) + len(losses)
+    win_rate = round((len(wins) / max(decided, 1)) * 100, 1) if decided > 0 else 0.0
+    profit_factor = round(gross_profit / gross_loss, 2) if gross_loss > 0 else (round(gross_profit, 2) if gross_profit > 0 else 0.0)
+    avg_trade_pnl = round(net_pnl / max(total_trades, 1), 2) if total_trades > 0 else 0.0
+
+    summary_dict = {
+        "total_trades": total_trades,
+        "wins_count": len(wins),
+        "losses_count": len(losses),
+        "breakeven_count": len(breakeven),
+        "win_rate_pct": win_rate,
+        "gross_profit_usd": gross_profit,
+        "gross_loss_usd": gross_loss,
+        "net_pnl_usd": net_pnl,
+        "profit_factor": profit_factor,
+        "avg_trade_pnl_usd": avg_trade_pnl,
+        "period": clean_period,
+        "account_id": account_id or "ALL"
+    }
+
+    return {
+        "trades": rows,
+        "summary": summary_dict,
+        "metrics": summary_dict
+    }
 
 def save_analysis_record(record: Dict[str, Any]) -> str:
     conn = get_db_connection()

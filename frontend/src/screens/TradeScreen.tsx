@@ -1,5 +1,27 @@
 import React, { useState, useEffect } from "react";
 import TradingViewWidget from "../components/TradingViewWidget";
+import {
+  CandlestickChart,
+  TrendingUp,
+  TrendingDown,
+  Layers,
+  ShieldCheck,
+  ShieldAlert,
+  Activity,
+  Wallet,
+  Settings2,
+  Coins,
+  ArrowUpRight,
+  ArrowDownRight,
+  RefreshCw,
+  Sliders,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Zap,
+  BarChart3,
+  Clock,
+} from "lucide-react";
 
 interface Asset {
   symbol: string;
@@ -53,6 +75,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
   const [selectedAiTp, setSelectedAiTp] = useState<"TP1" | "TP2" | "CUSTOM">("TP2");
   const [isAiSynced, setIsAiSynced] = useState<boolean>(true);
   const [accountState, setAccountState] = useState<any>(null);
+  const [openPositions, setOpenPositions] = useState<any[]>([]);
 
   // Real-time AI Master Stance state
   const [aiStanceData, setAiStanceData] = useState<any>(null);
@@ -138,6 +161,10 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
   };
 
   useEffect(() => {
+    // Reset any manual price inputs & old stance on symbol switch to avoid cross-asset contamination
+    setCustomSlPrice("");
+    setCustomTpPrice("");
+    setAiStanceData(null);
     fetchLiveAIStance(selectedSymbol);
   }, [selectedSymbol, activeAccount?.id, activeAccount?.balance, leverage, customLeverage]);
 
@@ -151,10 +178,17 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             setAccountState(d.account);
             setAmount((prev) => {
               if (prev === 5000 && d.account.equity < 5000) {
-                return Math.max(10, Math.round((d.account.available_margin || d.account.equity || 100) * 0.5));
+                const avail = d.account.available_margin || d.account.equity || 100;
+                if (avail <= 100) {
+                  return Math.max(1, Number((avail * 0.20).toFixed(1)));
+                }
+                return Math.max(10, Math.round(avail * 0.15));
               }
               return prev;
             });
+          }
+          if (d.open_positions) {
+            setOpenPositions(d.open_positions);
           }
         }
       })
@@ -203,11 +237,22 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
   const currentPrice = currentAsset.price || 2684.40;
   const isGold = currentAsset.symbol === "XAUUSD";
 
-  // Calculations for Order sizing with Account-Level Leverage support
+  // Calculations for Order sizing with Account-Level Leverage and Capital Sizing Protection
   const activeLeverage = activeAccount?.leverage || (customLeverage !== "" ? Math.max(1, Number(customLeverage)) : leverage);
+  const curEquity = Number(accountState?.equity ?? activeAccount?.balance ?? 100);
+  const isMicroAccount = curEquity <= 100;
+
   const notionalExposure = amount * activeLeverage;
   const marginRequired = amount;
-  const autoLot = Math.max(0.01, Number((notionalExposure / (currentPrice * (isGold ? 100 : 1))).toFixed(2)));
+
+  // Raw lot from theoretical notional
+  const rawAutoLot = Number((notionalExposure / (currentPrice * (isGold ? 100 : 1))).toFixed(2));
+
+  // Capital-Safe Lot Sizing:
+  // For small accounts ($10 to $100), clamp auto lot so an ordinary 1-2% price swing doesn't liquidate the entire account.
+  // E.g. on a $10 account with 1000x leverage, cap crypto lots to 0.05-0.10 lots max instead of 90 lots!
+  const safeLotCap = isMicroAccount ? (isGold ? 0.01 : Math.max(0.01, Number(((curEquity * 0.40) / (currentPrice * 0.04)).toFixed(2)))) : 100.0;
+  const autoLot = isMicroAccount ? Math.max(0.01, Math.min(rawAutoLot, safeLotCap, 0.10)) : Math.max(0.01, rawAutoLot);
   const lotSize = customLot ? Math.max(0.01, parseFloat(customLot)) : autoLot;
 
   const slPrice = (currentPrice * (1 + (side === "BUY" ? selectedSlPreset / 100 : -selectedSlPreset / 100))).toFixed(2);
@@ -220,6 +265,13 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
       : activeLeverage <= 30
       ? { label: "Moderate Risk", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" }
       : { label: "High Risk", color: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
+
+  // Dynamic AI Safe Leverage & Lot Calculations for Account Wash Prevention
+  const curCap = curEquity || 100;
+  const aiSafeLev = aiStanceData?.levels?.recommended_safe_leverage ?? (curCap <= 25 ? 20 : (curCap <= 100 ? 25 : (curCap <= 500 ? 50 : 100)));
+  const aiSafeLevRange = aiStanceData?.levels?.recommended_leverage_range ?? (curCap <= 25 ? "1:15 — 1:25" : (curCap <= 100 ? "1:20 — 1:30" : "1:30 — 1:50"));
+  const aiSafeLot = aiStanceData?.levels?.recommended_safe_lot ?? (curCap <= 25 ? (isGold ? 0.01 : 0.02) : (curCap <= 100 ? 0.05 : 0.10));
+  const isHighLeverageDanger = activeLeverage > (aiSafeLev * 2.0);
 
   // Core assets for bottom carousel
   const miniAssetsList = [
@@ -251,12 +303,50 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
     setExecuting(true);
     try {
       const activeSide = overrideSide || side || aiStanceData?.direction || "BUY";
-      const finalSl = customSlPrice
+      
+      // Ensure AI stance strictly belongs to the current symbol
+      const validAiStance = aiStanceData && (aiStanceData.symbol === currentAsset.symbol || aiStanceData.asset === currentAsset.symbol) ? aiStanceData : null;
+
+      let finalSl = customSlPrice
         ? parseFloat(customSlPrice)
-        : (aiStanceData?.levels?.stop_loss ? Number(aiStanceData.levels.stop_loss) : parseFloat(slPrice));
-      const finalTp = customTpPrice
+        : (validAiStance?.levels?.stop_loss ? Number(validAiStance.levels.stop_loss) : parseFloat(slPrice));
+      const decimals = currentPrice < 1.0 ? 4 : 2;
+
+      let finalTp = customTpPrice
         ? parseFloat(customTpPrice)
-        : (aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2) : (aiStanceData?.levels?.target_1 ? Number(aiStanceData.levels.target_1) : parseFloat(tpPrice)));
+        : (validAiStance?.levels?.target_2 ? Number(validAiStance.levels.target_2) : (validAiStance?.levels?.target_1 ? Number(validAiStance.levels.target_1) : parseFloat(tpPrice)));
+
+      // Cross-Asset SL/TP Sanity Guard:
+      // Prevent cross-asset contamination (e.g. Gold $4,372 SL on Solana $109)
+      if (activeSide === "BUY") {
+        if (isNaN(finalSl) || finalSl >= currentPrice || finalSl <= 0) {
+          finalSl = Number((currentPrice * 0.98).toFixed(decimals));
+        }
+        if (isNaN(finalTp) || finalTp <= currentPrice) {
+          finalTp = Number((currentPrice * 1.05).toFixed(decimals));
+        }
+      } else {
+        if (isNaN(finalSl) || finalSl <= currentPrice || finalSl <= 0) {
+          finalSl = Number((currentPrice * 1.02).toFixed(decimals));
+        }
+        if (isNaN(finalTp) || finalTp >= currentPrice) {
+          finalTp = Number((currentPrice * 0.95).toFixed(decimals));
+        }
+      }
+
+      // Institutional Account Preservation Check:
+      // Ensure potential SL dollar loss does not wipe out more than 50% of available equity
+      const maxAllowableLoss = curEquity * (isMicroAccount ? 0.50 : 0.20);
+      const riskPerUnit = Math.abs(currentPrice - finalSl);
+      const totalRiskUsd = riskPerUnit * lotSize;
+      if (totalRiskUsd > maxAllowableLoss && lotSize > 0) {
+        const safeDist = maxAllowableLoss / lotSize;
+        if (activeSide === "BUY") {
+          finalSl = Number((currentPrice - safeDist).toFixed(decimals));
+        } else {
+          finalSl = Number((currentPrice + safeDist).toFixed(decimals));
+        }
+      }
 
       const res = await fetch("/api/execution/trade", {
         method: "POST",
@@ -298,6 +388,43 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
     }
   };
 
+  const handleClosePosition = async (posId: string) => {
+    try {
+      const res = await fetch(`/api/execution/close/${posId}`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setOrderToast({
+          message: `Position #${posId.slice(-6)} closed at market`,
+          type: "success",
+        });
+        fetchExecutionState();
+      } else {
+        setOrderToast({
+          message: data.detail || "Failed to close position",
+          type: "error",
+        });
+      }
+    } catch (err: any) {
+      setOrderToast({
+        message: err.message || "Failed to close position",
+        type: "error",
+      });
+    }
+  };
+
+  const getAssetSparkline = (symbol: string, isPositive: boolean) => {
+    const seed = symbol.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const p1 = isPositive ? 16 - (seed % 6) : 6 + (seed % 6);
+    const p2 = isPositive ? 10 - ((seed * 2) % 5) : 12 + ((seed * 2) % 6);
+    const p3 = isPositive ? 6 - ((seed * 3) % 4) : 16 + ((seed * 3) % 5);
+    const endY = isPositive ? 3 : 21;
+    const startY = isPositive ? 19 : 4;
+    return {
+      line: `M0,${startY} Q25,${p1} 50,${p2} T75,${p3} T100,${endY}`,
+      fill: `M0,${startY} Q25,${p1} 50,${p2} T75,${p3} T100,${endY} L100,24 L0,24 Z`,
+    };
+  };
+
   return (
     <main className="w-full px-4 lg:px-8 py-6 max-w-[1600px] mx-auto">
       {/* Toast Notification */}
@@ -309,42 +436,45 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               : "bg-surface border border-rose-500/40 text-main"
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-[20px] ${
-              orderToast.type === "success" ? "text-[#10B981]" : "text-rose-500"
-            }`}
-          >
-            {orderToast.type === "success" ? "check_circle" : "error"}
-          </span>
+          {orderToast.type === "success" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+          )}
           <span className="text-[13px] font-bold">{orderToast.message}</span>
         </div>
       )}
 
-      {/* Paper Trading Demo Account Header Bar */}
+      {/* Active Trading Account & Unified Status Bar */}
       <div className="mb-6 p-4 rounded-2xl bg-surface border border-border-subtle card-shadow flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-            <span className="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+            <Wallet className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-extrabold text-main tracking-tight">Paper Trading Demo Account</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                Live Practice Mode
+              <span className="text-[14px] font-extrabold text-main tracking-tight">
+                {activeAccount?.name || "Trading Account"}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                1:{activeAccount?.leverage || activeLeverage} Leverage
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-well text-muted border border-border-subtle">
+                #{activeAccount?.id ? activeAccount.id.slice(-6) : "DEFAULT"}
               </span>
             </div>
             <p className="text-[11px] text-muted">
-              Apna custom capital choose karein, strategies test karein, aur balance grow karein.
+              Live unified trading wallet — balances, margin, and positions synced across all assets.
             </p>
           </div>
         </div>
 
-        {/* Demo Account Stats */}
+        {/* Unified Account Live Stats */}
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end overflow-x-auto">
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-muted block">Demo Balance</span>
+            <span className="text-[10px] uppercase font-bold text-muted block">Live Equity</span>
             <span className="font-mono text-[16px] font-bold text-main">
-              ${(accountState?.equity ?? 100000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${(accountState?.equity ?? activeAccount?.balance ?? 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -353,7 +483,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
           <div className="text-right hidden sm:block">
             <span className="text-[10px] uppercase font-bold text-muted block">Available Margin</span>
             <span className="font-mono text-[14px] font-bold text-muted">
-              ${(accountState?.available_margin ?? 100000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${(accountState?.available_margin ?? activeAccount?.balance ?? 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -362,7 +492,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
           <div className="text-right">
             <span className="text-[10px] uppercase font-bold text-muted block">Realized PnL</span>
             <span className={`font-mono text-[14px] font-bold ${(accountState?.realized_pnl ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-              {(accountState?.realized_pnl ?? 0) >= 0 ? "+" : ""}${(accountState?.realized_pnl ?? 0).toLocaleString()}
+              {(accountState?.realized_pnl ?? 0) >= 0 ? "+" : ""}${(accountState?.realized_pnl ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -371,12 +501,101 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               onClick={onOpenAccountManager}
               className="px-3.5 py-2 rounded-xl bg-well hover:bg-well-subtle border border-border-subtle text-main font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px] text-amber-500">manage_accounts</span>
-              <span>Manage Accounts</span>
+              <Settings2 className="w-4 h-4 text-amber-500" />
+              <span>Switch / Edit</span>
             </button>
           )}
         </div>
       </div>
+
+      {/* Active Open Positions Bar (Directly on Trade Screen!) */}
+      {openPositions && openPositions.length > 0 && (
+        <div className="mb-6 p-4 rounded-2xl bg-surface border border-emerald-500/30 card-shadow">
+          <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-3">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-black uppercase tracking-wider text-main">
+                Live Open Positions on {activeAccount?.name || 'Account'} ({openPositions.length})
+              </span>
+            </div>
+            <span className="text-[11px] font-mono text-muted">
+              Auto-updating real-time mark-to-market
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-sans">
+              <thead>
+                <tr className="border-b border-border-subtle text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <th className="pb-2 pl-2">Asset</th>
+                  <th className="pb-2">Side</th>
+                  <th className="pb-2">Size</th>
+                  <th className="pb-2">Entry Price</th>
+                  <th className="pb-2">Live Price</th>
+                  <th className="pb-2">SL / TP</th>
+                  <th className="pb-2">Unrealized PnL</th>
+                  <th className="pb-2 text-right pr-2">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle font-mono">
+                {openPositions.map((pos) => {
+                  const isProfit = (pos.unrealized_pnl || 0) >= 0;
+                  return (
+                    <tr key={pos.id} className="hover:bg-well-subtle transition-colors">
+                      <td className="py-2.5 pl-2 font-bold text-main">
+                        {pos.symbol}
+                      </td>
+                      <td className="py-2.5">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          pos.side === "BUY"
+                            ? "bg-emerald-500/15 text-[#10B981] border border-emerald-500/30"
+                            : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                        }`}>
+                          {pos.side}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-main">
+                        {pos.quantity} Lots
+                      </td>
+                      <td className="py-2.5 text-muted">
+                        ${pos.entry_price.toFixed(2)}
+                      </td>
+                      <td className="py-2.5 font-bold text-main">
+                        ${(pos.current_price || pos.entry_price).toFixed(2)}
+                      </td>
+                      <td className="py-2.5 text-[11px]">
+                        <span className="text-rose-400">{pos.stop_loss ? `$${pos.stop_loss.toFixed(2)}` : "—"}</span>
+                        {" / "}
+                        <span className="text-[#10B981]">{pos.take_profit ? `$${pos.take_profit.toFixed(2)}` : "—"}</span>
+                      </td>
+                      <td className="py-2.5 font-bold">
+                        <span className={`px-2 py-0.5 rounded border ${
+                          isProfit
+                            ? "bg-emerald-500/10 text-[#10B981] border-emerald-500/25"
+                            : "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                        }`}>
+                          {isProfit ? "+" : ""}${(pos.unrealized_pnl || 0).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-right pr-2">
+                        <button
+                          onClick={() => handleClosePosition(pos.id)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 active:scale-95 transition-all cursor-pointer"
+                        >
+                          Close Market
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ============================================================ */}
@@ -390,9 +609,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <span className="material-symbols-outlined text-[22px]">
-                      {isGold ? "monetization_on" : "currency_bitcoin"}
-                    </span>
+                    <Coins className="w-5 h-5 text-amber-400" />
                   </div>
 
                   <div>
@@ -423,18 +640,20 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
 
                     <div className="flex items-baseline gap-3 mt-1">
                       <span className="font-mono text-[30px] font-extrabold tracking-tight text-main tabular-nums">
-                        ${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${currentPrice < 0.0001 ? currentPrice.toFixed(8) : currentPrice < 0.01 ? currentPrice.toFixed(6) : currentPrice < 1 ? currentPrice.toFixed(4) : currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                       <span
-                        className={`font-mono text-[13px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-0.5 ${
+                        className={`font-mono text-[13px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                           currentAsset.change24h >= 0
                             ? "bg-emerald-500/15 border border-emerald-500/30 text-[#10B981]"
                             : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[15px]">
-                          {currentAsset.change24h >= 0 ? "arrow_drop_up" : "arrow_drop_down"}
-                        </span>
+                        {currentAsset.change24h >= 0 ? (
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                        )}
                         {currentAsset.change24h >= 0 ? "+" : ""}
                         {currentAsset.change24h.toFixed(2)}%
                       </span>
@@ -471,9 +690,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                       showTVWidget ? "bg-amber-400 text-black font-bold" : "text-muted hover:text-main"
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[16px]">
-                      candlestick_chart
-                    </span>
+                    <CandlestickChart className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -662,50 +879,84 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             </div>
           </div>
 
-          {/* Live Market Watch & Quick Switch Grid (Balances layout height & provides 1-click asset switching) */}
+          {/* Live Market Watch & Quick Switch Grid (Compact 8-Asset Grid with Mini SVG Trend Graphs) */}
           <div className="bg-surface border border-border-subtle rounded-3xl p-5 card-shadow flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-amber-500">candlestick_chart</span>
+                <CandlestickChart className="w-4 h-4 text-amber-500" />
                 <span className="text-[13px] font-extrabold text-main">Live Market Watch &amp; Quick Switch</span>
               </div>
-              <span className="text-[10px] font-mono text-muted">Click asset to analyze &amp; trade</span>
+              <span className="text-[10px] font-mono text-muted">Click asset to switch chart &amp; order</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {assets.slice(0, 8).map((asset) => {
                 const isSelected = asset.symbol === selectedSymbol;
-                const isPositive = (asset.change_24h ?? 0) >= 0;
+                const change = asset.change24h ?? asset.change_24h ?? 0;
+                const isPositive = change >= 0;
+                const price = asset.price ?? 0;
+                const spark = getAssetSparkline(asset.symbol, isPositive);
+
                 return (
                   <button
                     key={asset.symbol}
                     onClick={() => onSelectSymbol(asset.symbol)}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 relative overflow-hidden group ${
                       isSelected
                         ? isDark
-                          ? "bg-white/10 border-white/40 shadow-sm"
-                          : "bg-black/5 border-black/30 shadow-sm"
-                        : "bg-well border-border-subtle hover:border-border-muted"
+                          ? "bg-white/10 border-white/40 shadow-sm ring-1 ring-white/20"
+                          : "bg-black/5 border-black/30 shadow-sm ring-1 ring-black/10"
+                        : "bg-well border-border-subtle hover:border-border-muted hover:bg-well-subtle"
                     }`}
                   >
+                    {/* Top line: Symbol & 24h Change */}
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-mono font-black text-xs text-main">{asset.symbol}</span>
+                      <span className="font-mono font-black text-xs text-main tracking-tight">
+                        {asset.symbol}
+                      </span>
                       <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
                           isPositive ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"
                         }`}
                       >
-                        {isPositive ? "+" : ""}{(asset.change_24h ?? 0).toFixed(2)}%
+                        {isPositive ? (
+                          <TrendingUp className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <TrendingDown className="w-3 h-3 text-rose-400" />
+                        )}
+                        {isPositive ? "+" : ""}
+                        {change.toFixed(2)}%
                       </span>
                     </div>
 
+                    {/* Price & Name */}
                     <div>
-                      <div className="font-mono font-bold text-[13px] text-main tabular-nums">
-                        ${(asset.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      <div className="font-mono font-bold text-[14px] text-main tabular-nums leading-none">
+                        ${price < 0.0001 ? price.toFixed(8) : price < 0.01 ? price.toFixed(6) : price < 1 ? price.toFixed(4) : price.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </div>
-                      <div className="text-[10px] text-muted font-sans truncate mt-0.5">
+                      <div className="text-[10px] text-muted font-sans truncate mt-1">
                         {asset.name}
                       </div>
+                    </div>
+
+                    {/* Mini SVG Sparkline Trend Graph */}
+                    <div className="h-6 w-full mt-0.5">
+                      <svg className="w-full h-full" viewBox="0 0 100 24" fill="none" preserveAspectRatio="none">
+                        <path
+                          d={spark.line}
+                          stroke={isPositive ? "#10B981" : "#F43F5E"}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d={spark.fill}
+                          fill={isPositive ? "rgba(16, 185, 129, 0.08)" : "rgba(244, 63, 94, 0.08)"}
+                        />
+                      </svg>
                     </div>
                   </button>
                 );
@@ -768,12 +1019,10 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               <button
                 onClick={() => fetchLiveAIStance(currentAsset.symbol)}
                 disabled={isAnalyzingStance}
-                className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-amber-400 hover:text-amber-300 border border-neutral-700 hover:border-amber-500/40 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                 title="Run fresh live AI multi-agent analysis on current price tick"
               >
-                <span className={`material-symbols-outlined text-[14px] ${isAnalyzingStance ? "animate-spin" : ""}`}>
-                  {isAnalyzingStance ? "sync" : "refresh"}
-                </span>
+                <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzingStance ? "animate-spin" : ""}`} />
                 <span>{isAnalyzingStance ? "Analyzing..." : "Re-Analyze"}</span>
               </button>
             </div>
@@ -897,8 +1146,8 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               {/* Liquidation Buffer & Account Protection Indicator */}
               {aiStanceData?.levels?.liquidation_price && (
                 <div className="flex justify-between items-center pt-2 border-t border-border-subtle text-[11px]">
-                  <span className="text-muted font-sans flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-emerald-400">shield</span>
+                  <span className="text-muted font-sans flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                     Account Buffer:
                   </span>
                   <span className="font-bold text-emerald-400 flex items-center gap-1">
@@ -936,12 +1185,10 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             <div className="text-right">
               <button
                 onClick={onOpenDeepDive}
-                className="text-[12px] font-bold text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-[12px] font-bold text-amber-500 hover:text-amber-400 inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <span>View full analysis &amp; debate</span>
-                <span className="material-symbols-outlined text-[14px]">
-                  arrow_forward
-                </span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -961,7 +1208,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface border border-border-subtle text-muted hover:text-main cursor-pointer flex items-center gap-1 transition-all"
                   title="Sync SL & TP to current analysis"
                 >
-                  <span className="material-symbols-outlined text-[13px]">refresh</span>
+                  <RefreshCw className="w-3 h-3" />
                   <span>Sync Targets</span>
                 </button>
               </div>
@@ -1041,7 +1288,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
               <div className="flex items-center justify-between gap-1.5 mt-2">
                 {[0.25, 0.50, 0.75, 1.0].map((pct) => {
                   const avail = accountState?.available_margin || accountState?.equity || 100;
-                  const targetAmt = Math.max(10, Math.round(avail * pct));
+                  const targetAmt = avail <= 50 ? Math.max(1, Number((avail * pct).toFixed(1))) : Math.max(10, Math.round(avail * pct));
                   return (
                     <button
                       key={pct}
@@ -1063,34 +1310,63 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
             </div>
 
             {/* Account Leverage Setting Spec */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-well border border-border-subtle">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <span className="material-symbols-outlined text-[16px]">tune</span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-muted block">Account Leverage</span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs font-mono font-black text-main">
-                      1:{activeAccount?.leverage || leverage || 100} Fixed (Broker Standard)
-                    </span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${riskBadge.color}`}>
-                      {riskBadge.label}
-                    </span>
+            <div className="p-3 rounded-2xl bg-well border border-border-subtle space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Sliders className="w-4 h-4 text-amber-400" />
                   </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted block">Account Leverage</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-xs font-mono font-black text-main">
+                        1:{activeLeverage} {customLeverage ? "(Safe Override)" : "Fixed"}
+                      </span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${riskBadge.color}`}>
+                        {riskBadge.label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {isHighLeverageDanger && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomLeverage(String(aiSafeLev));
+                        setCustomLot(String(aiSafeLot));
+                        setOrderToast({
+                          message: `AI Safe Leverage (1:${aiSafeLev}) aur Safe Lot (${aiSafeLot}) apply ho gaya!`,
+                          type: "success",
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                      title="Click to apply safe leverage & lot to avoid account wash"
+                    >
+                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                      <span>Apply Safe 1:{aiSafeLev}</span>
+                    </button>
+                  )}
+                  {onOpenAccountManager && (
+                    <button
+                      type="button"
+                      onClick={onOpenAccountManager}
+                      className="px-2 py-1 rounded-xl bg-surface border border-border-subtle hover:border-amber-400/50 text-[10px] font-mono font-bold text-muted hover:text-main flex items-center gap-1 transition-all cursor-pointer"
+                      title="Account Settings"
+                    >
+                      <Settings2 className="w-3 h-3 text-amber-500" />
+                      <span>Settings</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {onOpenAccountManager && (
-                <button
-                  type="button"
-                  onClick={onOpenAccountManager}
-                  className="px-2.5 py-1 rounded-xl bg-surface border border-border-subtle hover:border-amber-400/50 text-[11px] font-mono font-bold text-muted hover:text-main flex items-center gap-1 transition-all cursor-pointer"
-                  title="Modify leverage in Account Settings"
-                >
-                  <span className="material-symbols-outlined text-[13px]">settings</span>
-                  <span>Settings</span>
-                </button>
+              {/* Minimal 1-line clean Broker Tip (Zero extra cards, zero clutter) */}
+              {isHighLeverageDanger && (
+                <div className="text-[10px] font-sans text-amber-400/90 pt-1 border-t border-border-subtle flex items-center justify-between">
+                  <span>💡 Real Broker Tip: ${curCap.toFixed(0)} capital par 1:{aiSafeLev} leverage &amp; {aiSafeLot} lots set karein taake account wash na ho.</span>
+                </div>
               )}
             </div>
 
@@ -1102,7 +1378,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                   {customLot && (
                     <button
                       onClick={() => setCustomLot("")}
-                      className="text-[10px] text-blue-500 hover:underline font-bold"
+                      className="text-[10px] text-amber-500 hover:underline font-bold"
                     >
                       Reset Auto
                     </button>
@@ -1112,7 +1388,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between bg-well border border-border-subtle rounded-xl px-3.5 py-1.5 focus-within:border-blue-500 transition-colors">
+              <div className="flex items-center justify-between bg-well border border-border-subtle rounded-xl px-3.5 py-1.5 focus-within:border-amber-500/50 transition-colors">
                 <input
                   type="number"
                   step="0.01"
@@ -1245,9 +1521,7 @@ export const TradeScreen: React.FC<TradeScreenProps> = ({
                   ? "Executing Trade..."
                   : `⚡ Place ${side} Order on AI Signal (SL: $${customSlPrice || (aiStanceData?.levels?.stop_loss ? Number(aiStanceData.levels.stop_loss).toFixed(2) : slPrice)} | TP: $${customTpPrice || (aiStanceData?.levels?.target_2 ? Number(aiStanceData.levels.target_2).toFixed(2) : tpPrice)})`}
               </span>
-              <span className="material-symbols-outlined text-[18px] font-bold">
-                arrow_forward
-              </span>
+              <ArrowRight className="w-4 h-4 font-bold" />
             </button>
           </div>
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ChevronDown,
   Search,
@@ -162,7 +162,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   activeTab === "METALS" ? "bg-[#F59E0B]/20 text-[#F59E0B] font-bold" : "text-slate-400"
                 }`}
               >
-                GOLD
+                COMMODITIES
               </button>
             </div>
 

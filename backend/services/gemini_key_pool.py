@@ -58,7 +58,7 @@ class GeminiKeyPool:
         key_macro = os.environ.get("GEMINI_API_KEY_MACRO")
         key_agents = os.environ.get("GEMINI_API_KEY_AGENTS")
         key_signals = os.environ.get("GEMINI_API_KEY_SIGNALS")
-        default_key = os.environ.get("GOOGLE_API_KEY")
+        default_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 
         if key_macro:
             self.slots.append(KeySlot(key_macro, "MACRO", "Project 1 (Macro & News)"))
@@ -173,6 +173,9 @@ class GeminiKeyPool:
 
 # Global Singleton Instance
 KEY_POOL = GeminiKeyPool()
+
+def get_gemini_key_pool() -> GeminiKeyPool:
+    return KEY_POOL
 
 if __name__ == "__main__":
     status = KEY_POOL.get_pool_status()
